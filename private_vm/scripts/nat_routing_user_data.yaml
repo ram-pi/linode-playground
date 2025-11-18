@@ -1,0 +1,60 @@
+#cloud-config
+ssh_pwauth: false
+
+write_files:
+  - path: /usr/local/bin/configure-nat-route.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -x
+      exec >> /var/log/nat-route-setup.log 2>&1
+      echo "$(date): Starting NAT route configuration"
+
+      # Wait for VLAN interface to be ready
+      for i in {1..30}; do
+        VLAN_IFACE=$(ip -4 addr show | grep "192.168.100.2" | awk '{print $NF}')
+        if [ -n "$VLAN_IFACE" ]; then
+          echo "Found VLAN interface: $VLAN_IFACE"
+          break
+        fi
+        echo "Waiting for VLAN interface... attempt $i"
+        sleep 2
+      done
+
+      if [ -z "$VLAN_IFACE" ]; then
+        echo "ERROR: VLAN interface not found!"
+        exit 1
+      fi
+
+      # Delete all default routes
+      while ip route del default 2>/dev/null; do
+        echo "Removed existing default route"
+      done
+
+      # Add new default route via VLAN
+      ip route add default via 192.168.100.1 dev $VLAN_IFACE
+      echo "Added default route via 192.168.100.1 dev $VLAN_IFACE"
+
+      # Show current routing table
+      ip route show
+
+  - path: /etc/systemd/system/nat-route-setup.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Configure NAT Gateway Default Route
+      After=network-online.target cloud-init.service
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/configure-nat-route.sh
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - systemctl daemon-reload
+  - systemctl enable nat-route-setup.service
+  - systemctl start nat-route-setup.service

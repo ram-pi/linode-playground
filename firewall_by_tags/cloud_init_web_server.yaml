@@ -1,0 +1,13 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - nginx
+
+runcmd:
+  # Create a simple index.html page
+  - echo "<h1>Hello World!</h1><p>This web server was configured by cloud-init.</p>" > /var/www/html/index.html
+  # Start and enable the nginx service
+  - systemctl start nginx
+  - systemctl enable nginx
