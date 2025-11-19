@@ -63,6 +63,28 @@ Deploy a static website using Linode Object Storage with automatic backup synchr
 
 **Additional tools required:** `s3cmd`, `rclone`
 
+### 📊 Linode Prometheus Exporter
+**[`linode_prometheus_exporter/`](linode_prometheus_exporter/)**
+
+Prometheus exporter that exposes Linode resource metrics for monitoring and alerting. Includes a complete monitoring stack with Prometheus and Grafana, featuring a pre-built dashboard for visualizing your Linode infrastructure.
+
+**Demonstrates:**
+- Custom Prometheus exporter development
+- Multi-platform Docker image with QEMU
+- Docker Compose orchestration
+- Grafana dashboard provisioning
+- Python SDK integration with Linode API
+
+**Metrics exposed:**
+- Linode instances, volumes, VPCs, VLANs
+- LKE clusters (standard and HA)
+- Object Storage buckets
+- Cloud Firewalls, NodeBalancers
+- Managed Databases
+- Users and API tokens
+
+**Additional tools required:** `Docker`, `Docker Compose` (or `python3` with venv for standalone)
+
 ## Resources
 
 - [Linode Documentation](https://www.linode.com/docs/)
@@ -70,6 +92,10 @@ Deploy a static website using Linode Object Storage with automatic backup synchr
 - [Linode API Documentation](https://www.linode.com/docs/api/)
 - [s3cmd Documentation](https://s3tools.org/s3cmd)
 - [rclone Documentation](https://rclone.org/)
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
 
 ---
 
