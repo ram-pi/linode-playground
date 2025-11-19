@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+
+# Scripts (not needed in container)
+start.sh
+shutdown.sh
+docker-start.sh
+
+# Docker and Compose
+docker-compose.yml
+prometheus.yml
+
+# Grafana
+grafana/
