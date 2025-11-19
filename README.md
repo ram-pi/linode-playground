@@ -27,8 +27,8 @@ cd <project-name>
 
 ## Projects
 
-### 🔥 Firewall Management by Tags
-**[`firewall_by_tags/`](firewall_by_tags/)**
+<details>
+<summary><b>🔥 Firewall Management by Tags</b> - <code>firewall_by_tags/</code></summary>
 
 Automated firewall rule management using tag-based assignment. Combines OpenTofu provisioning with Python API automation to dynamically apply firewall rules based on instance tags.
 
@@ -38,8 +38,10 @@ Automated firewall rule management using tag-based assignment. Combines OpenTofu
 - Firewall rule propagation timing
 - Cloud-init web server setup
 
-### 🔒 Private VM with NAT Gateway
-**[`private_vm/`](private_vm/)**
+</details>
+
+<details>
+<summary><b>🔒 Private VM with NAT Gateway</b> - <code>private_vm/</code></summary>
 
 Secure network architecture with a private VM isolated from the internet, accessing external resources through a NAT gateway. Shows VPC design with public/private subnets.
 
@@ -50,8 +52,10 @@ Secure network architecture with a private VM isolated from the internet, access
 - VLAN for Layer 2 connectivity
 - Multi-interface networking
 
-### 🌐 Static Website with Object Storage
-**[`static_website/`](static_website/)**
+</details>
+
+<details>
+<summary><b>🌐 Static Website with Object Storage</b> - <code>static_website/</code></summary>
 
 Deploy a static website using Linode Object Storage with automatic backup synchronization. Demonstrates cloud storage for web hosting with built-in redundancy.
 
@@ -63,8 +67,10 @@ Deploy a static website using Linode Object Storage with automatic backup synchr
 
 **Additional tools required:** `s3cmd`, `rclone`
 
-### 📊 Linode Prometheus Exporter
-**[`linode_prometheus_exporter/`](linode_prometheus_exporter/)**
+</details>
+
+<details>
+<summary><b>📊 Linode Prometheus Exporter</b> - <code>linode_prometheus_exporter/</code></summary>
 
 Prometheus exporter that exposes Linode resource metrics for monitoring and alerting. Includes a complete monitoring stack with Prometheus and Grafana, featuring a pre-built dashboard for visualizing your Linode infrastructure.
 
@@ -84,6 +90,8 @@ Prometheus exporter that exposes Linode resource metrics for monitoring and aler
 - Users and API tokens
 
 **Additional tools required:** `Docker`, `Docker Compose` (or `python3` with venv for standalone)
+
+</details>
 
 ## Resources
 
