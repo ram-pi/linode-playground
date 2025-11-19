@@ -50,11 +50,26 @@ Secure network architecture with a private VM isolated from the internet, access
 - VLAN for Layer 2 connectivity
 - Multi-interface networking
 
+### 🌐 Static Website with Object Storage
+**[`static_website/`](static_website/)**
+
+Deploy a static website using Linode Object Storage with automatic backup synchronization. Demonstrates cloud storage for web hosting with built-in redundancy.
+
+**Demonstrates:**
+- Object Storage bucket management
+- Static website hosting with S3-compatible storage
+- Automatic backup synchronization with rclone
+- Bucket policies and public access configuration
+
+**Additional tools required:** `s3cmd`, `rclone`
+
 ## Resources
 
 - [Linode Documentation](https://www.linode.com/docs/)
 - [OpenTofu Documentation](https://opentofu.org/docs/)
 - [Linode API Documentation](https://www.linode.com/docs/api/)
+- [s3cmd Documentation](https://s3tools.org/s3cmd)
+- [rclone Documentation](https://rclone.org/)
 
 ---
 
