@@ -91,6 +91,65 @@ Prometheus exporter that exposes Linode resource metrics for monitoring and aler
 
 **Additional tools required:** `Docker`, `Docker Compose` (or `python3` with venv for standalone)
 
+You can run `linode_prometheus_exporter` in standalone mode with the command below:
+
+```
+docker run --rm -p 9100:9100 -d  -e LINODE_TOKEN=MY_TOKEN  ghcr.io/ram-pi/linode-playground/linode-exporter:v0.0.1
+```
+
+</details>
+
+<details>
+<summary><b>🔒 Secure LKE Cluster</b> - <code>secure_lke/</code></summary>
+
+Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.
+
+**Demonstrates:**
+- LKE 1.34 with HA control plane
+- VPC-native networking with private subnets
+- Cloud Firewall integration with IP-based access control
+- Cluster auto-scaling (3-6 nodes)
+- Dedicated compute instances (g6-dedicated-4)
+- Helm chart deployments
+- Security hardening scripts
+
+**Additional tools required:** `kubectl`, `helm`
+
+</details>
+
+<details>
+<summary><b>🧹 Cleanup Utilities</b> - <code>utils/</code></summary>
+
+Collection of cleanup scripts to remove orphaned or unused Linode resources. Includes a master script that automatically discovers and runs all cleanup utilities.
+
+**Demonstrates:**
+- Dynamic script discovery and execution
+- Linode CLI automation
+- Resource cleanup best practices
+- Safe deletion workflows with confirmation prompts
+
+**Cleanup scripts:**
+- Orphaned Cloud Firewalls
+- Unattached Block Storage volumes
+- All NodeBalancers
+- Private/custom images
+
+**Additional tools required:** `linode-cli`, `jq`
+
+</details>
+
+<details>
+<summary><b>🌐 HTTP API Examples</b> - <code>http_apis/</code></summary>
+
+Collection of `.http` files for testing Linode REST APIs using the VS Code REST Client extension. Provides ready-to-use API request templates for common Linode operations.
+
+**Demonstrates:**
+- Direct Linode API interaction
+- REST Client usage in VS Code
+- API authentication with Bearer tokens
+
+**Additional tools required:** VS Code with [REST Client extension](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+
 </details>
 
 ## Resources
@@ -104,6 +163,10 @@ Prometheus exporter that exposes Linode resource metrics for monitoring and aler
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
+- [kubectl Documentation](https://kubernetes.io/docs/reference/kubectl/)
+- [Helm Documentation](https://helm.sh/docs/)
+- [Linode CLI Documentation](https://www.linode.com/docs/products/tools/cli/get-started/)
+- [jq Manual](https://stedolan.github.io/jq/manual/)
 
 ---
 

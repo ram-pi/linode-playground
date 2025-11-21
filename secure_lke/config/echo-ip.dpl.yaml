@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-ip
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-ip
+  template:
+    metadata:
+      labels:
+        app: echo-ip
+    spec:
+      containers:
+        - name: echo-ip
+          image: ealen/echo-server:latest
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

@@ -85,3 +85,17 @@ Temporary Items
 .todos
 .todo
 TODO
+
+# kubernetes
+.kube/
+.kubeignore
+.kubeconfig
+.kubecontext
+.kubecontexts
+.kubetmp
+kubeconfig
+
+# custom
+*.disable
+*.notowrking
+*.todo*
