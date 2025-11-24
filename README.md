@@ -118,6 +118,22 @@ Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security f
 </details>
 
 <details>
+<summary><b>🗄️ Secure DBaaS with Bastion Host</b> - <code>secure_dbaas/</code></summary>
+
+Secure database infrastructure setup using VPC networking and a bastion host for controlled access. Demonstrates best practices for deploying database services with network isolation and a hardened jump server.
+
+**Demonstrates:**
+- VPC isolation
+- Bastion host as secure entry point
+- Cloud Firewall with IP-based access control
+- SSH key-based authentication (password auth disabled)
+- PostgreSQL client tools pre-installed on bastion
+
+**Additional tools required:** SSH client
+
+</details>
+
+<details>
 <summary><b>🧹 Cleanup Utilities</b> - <code>utils/</code></summary>
 
 Collection of cleanup scripts to remove orphaned or unused Linode resources. Includes a master script that automatically discovers and runs all cleanup utilities.
