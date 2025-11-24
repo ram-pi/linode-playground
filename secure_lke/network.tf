@@ -1,8 +1,5 @@
-# Terraform configuration for Linode VPC and Subnet
-
-resource "linode_vpc" "main" {
-  label  = "main"
-  region = local.region
+locals {
+  private_ips_range = "192.168.128.0/17"
 }
 
 resource "linode_firewall" "allow-my-ip" {
@@ -13,7 +10,7 @@ resource "linode_firewall" "allow-my-ip" {
     action   = "ACCEPT"
     protocol = "TCP"
     ports    = "1-65535"
-    ipv4     = [local.my_ip]
+    ipv4     = [local.my_ip_cidr]
   }
 
   inbound {
@@ -21,14 +18,14 @@ resource "linode_firewall" "allow-my-ip" {
     action   = "ACCEPT"
     protocol = "UDP"
     ports    = "1-65535"
-    ipv4     = [local.my_ip]
+    ipv4     = [local.my_ip_cidr]
   }
 
   inbound {
     label    = "allow-icmp-from-${local.my_ip_}"
     action   = "ACCEPT"
     protocol = "ICMP"
-    ipv4     = [local.my_ip]
+    ipv4     = [local.my_ip_cidr]
   }
 
   inbound {
@@ -36,7 +33,7 @@ resource "linode_firewall" "allow-my-ip" {
     action   = "ACCEPT"
     protocol = "TCP"
     ports    = "1-65535"
-    ipv4     = ["10.0.0.0/8"]
+    ipv4     = [local.private_ips_range]
   }
 
   inbound {
@@ -44,14 +41,14 @@ resource "linode_firewall" "allow-my-ip" {
     action   = "ACCEPT"
     protocol = "UDP"
     ports    = "1-65535"
-    ipv4     = ["10.0.0.0/8"]
+    ipv4     = [local.private_ips_range]
   }
 
   inbound {
     label    = "allow-icmp-vpc"
     action   = "ACCEPT"
     protocol = "ICMP"
-    ipv4     = ["10.0.0.0/8"]
+    ipv4     = [local.private_ips_range]
   }
 
   inbound_policy  = "DROP"

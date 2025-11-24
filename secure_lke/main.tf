@@ -9,6 +9,7 @@ data "http" "my_ip" {
 }
 
 locals {
-  my_ip  = "${chomp(data.http.my_ip.response_body)}/32"
-  my_ip_ = replace(chomp(data.http.my_ip.response_body), "\\.", "_")
+  my_ip      = chomp(data.http.my_ip.response_body)
+  my_ip_     = replace(chomp(data.http.my_ip.response_body), ".", "_")
+  my_ip_cidr = "${chomp(data.http.my_ip.response_body)}/32"
 }

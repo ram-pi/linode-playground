@@ -31,7 +31,7 @@ wait_for_deletions
 
 # delete nodebalancers
 echo "Deleting NodeBalancers..."
-tofu output -raw loadbalancer_service_conf | kubectl delete -f -
+tofu output -raw loadbalancer_service_conf | kubectl delete -f - || echo "LoadBalancer service not found or already deleted"
 wait_for_deletions
 
 echo ""

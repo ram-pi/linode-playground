@@ -20,8 +20,6 @@ resource "linode_lke_cluster" "main" {
 
   }
 
-  vpc_id = linode_vpc.main.id
-
   apl_enabled = false # Enable/Disable Akamai App Platform
 
   control_plane {
@@ -35,16 +33,12 @@ resource "linode_lke_cluster" "main" {
           # "${local.my_ip}",
           # "10.0.0.0/8"
           "0.0.0.0/0",
+          "192.168.128.0/17"
+          # local.my_ip
         ]
       }
     }
   }
-
-  lifecycle {
-    ignore_changes = [vpc_id]
-  }
-
-  depends_on = [linode_vpc.main]
 }
 
 

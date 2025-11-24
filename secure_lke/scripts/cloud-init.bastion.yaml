@@ -1,0 +1,13 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - jq
+
+runcmd:
+  # Install kubectl using snap (classic confinement is required for kubectl)
+  - snap install kubectl --classic
+
+  # (Optional) Alias kubectl to 'k' for efficiency
+  - snap alias kubectl k

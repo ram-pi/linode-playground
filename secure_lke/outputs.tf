@@ -25,7 +25,7 @@ output "loadbalancer_service_conf" {
       service.beta.kubernetes.io/linode-loadbalancer-firewall-acl: |
         {
           "allowList": {
-            "ipv4": ["${local.my_ip}", "10.0.0.0/8"]
+            "ipv4": ["${local.my_ip_cidr}", "10.0.0.0/8"]
           }
         }
   spec:
@@ -52,7 +52,7 @@ output "loadbalancer_service_conf" {
       service.beta.kubernetes.io/linode-loadbalancer-firewall-acl: |
         {
           "allowList": {
-            "ipv4": ["${local.my_ip}", "10.0.0.0/8"]
+            "ipv4": ["${local.my_ip_cidr}", "10.0.0.0/8"]
           }
         }
   spec:

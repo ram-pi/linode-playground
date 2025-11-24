@@ -77,3 +77,16 @@ echo "You can access the applications using the external IPs assigned to the ser
 echo "========================================="
 echo "Secure LKE Cluster Deployment Finished!"
 echo "========================================="
+
+# Step 8: Apply Hardening script
+echo "Step 8: Applying security hardening to the cluster..."
+bash scripts/hardening.sh
+echo "✓ Security hardening applied to the cluster"
+echo ""
+echo "========================================="
+echo "Secure LKE Cluster Deployment Finished!"
+echo "========================================="
+
+# Step 9: Print SSH command to connect to bastion
+echo "You can connect to the bastion host using the following command:"
+tofu output -raw ssh_command
