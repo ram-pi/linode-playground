@@ -4,7 +4,7 @@ Secure database infrastructure setup on Linode using VPC networking and a bastio
 
 ## Architecture
 
-![diagram](.drawio.png)
+![diagram](drawio.svg)
 
 ## Features
 
