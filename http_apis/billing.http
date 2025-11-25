@@ -2,7 +2,6 @@
 @base_url_v4beta = https://api.linode.com/v4beta
 
 ### Get Invoices
-# @prompt token
 GET  {{base_url}}/account/invoices
 Accept: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{linode_token}}

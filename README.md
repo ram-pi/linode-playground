@@ -28,6 +28,21 @@ cd <project-name>
 ## Projects
 
 <details>
+<summary><b>🔧 Basic Multi-Network VM</b> - <code>basic/</code></summary>
+
+Basic VM setup demonstrating all three Linode networking types in a single instance. Shows how to configure VPC, VLAN, and Private IP simultaneously for different connectivity patterns.
+
+**Demonstrates:**
+- VPC networking with NAT 1:1
+- VLAN for Layer 2 connectivity
+- Private IP for datacenter-local communication
+- Multi-interface configuration
+- Cloud-init package installation
+- SSH key-based authentication only
+
+</details>
+
+<details>
 <summary><b>🔥 Firewall Management by Tags</b> - <code>firewall_by_tags/</code></summary>
 
 Automated firewall rule management using tag-based assignment. Combines OpenTofu provisioning with Python API automation to dynamically apply firewall rules based on instance tags.
