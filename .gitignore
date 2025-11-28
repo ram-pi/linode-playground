@@ -99,3 +99,15 @@ kubeconfig
 *.disable
 *.notowrking
 *.todo*
+
+# ansible
+*.retry
+.ansible/
+ansible.log
+*.vault
+vault-password.txt
+.vault_pass
+
+# site2site_vpn
+site2site_vpn/vpn-setup/keys
+site2site_vpn/vpn-setup/hosts.ini

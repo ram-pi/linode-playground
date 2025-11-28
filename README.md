@@ -28,7 +28,7 @@ cd <project-name>
 ## Projects
 
 <details>
-<summary><b>🔧 Basic Multi-Network VM</b> - <code>basic/</code></summary>
+<summary><b>🔧 <a href="basic/">Basic Multi-Network VM</a></b> - <code>basic/</code></summary>
 
 Basic VM setup demonstrating all three Linode networking types in a single instance. Shows how to configure VPC, VLAN, and Private IP simultaneously for different connectivity patterns.
 
@@ -43,7 +43,7 @@ Basic VM setup demonstrating all three Linode networking types in a single insta
 </details>
 
 <details>
-<summary><b>🔥 Firewall Management by Tags</b> - <code>firewall_by_tags/</code></summary>
+<summary><b>🔥 <a href="firewall_by_tags/">Firewall Management by Tags</a></b> - <code>firewall_by_tags/</code></summary>
 
 Automated firewall rule management using tag-based assignment. Combines OpenTofu provisioning with Python API automation to dynamically apply firewall rules based on instance tags.
 
@@ -56,7 +56,7 @@ Automated firewall rule management using tag-based assignment. Combines OpenTofu
 </details>
 
 <details>
-<summary><b>🔒 Private VM with NAT Gateway</b> - <code>private_vm/</code></summary>
+<summary><b>🔒 <a href="private_vm/">Private VM with NAT Gateway</a></b> - <code>private_vm/</code></summary>
 
 Secure network architecture with a private VM isolated from the internet, accessing external resources through a NAT gateway. Shows VPC design with public/private subnets.
 
@@ -70,7 +70,7 @@ Secure network architecture with a private VM isolated from the internet, access
 </details>
 
 <details>
-<summary><b>🌐 Static Website with Object Storage</b> - <code>static_website/</code></summary>
+<summary><b>🌐 <a href="static_website/">Static Website with Object Storage</a></b> - <code>static_website/</code></summary>
 
 Deploy a static website using Linode Object Storage with automatic backup synchronization. Demonstrates cloud storage for web hosting with built-in redundancy.
 
@@ -85,7 +85,7 @@ Deploy a static website using Linode Object Storage with automatic backup synchr
 </details>
 
 <details>
-<summary><b>📊 Linode Prometheus Exporter</b> - <code>linode_prometheus_exporter/</code></summary>
+<summary><b>📊 <a href="linode_prometheus_exporter/">Linode Prometheus Exporter</a></b> - <code>linode_prometheus_exporter/</code></summary>
 
 Prometheus exporter that exposes Linode resource metrics for monitoring and alerting. Includes a complete monitoring stack with Prometheus and Grafana, featuring a pre-built dashboard for visualizing your Linode infrastructure.
 
@@ -115,7 +115,7 @@ docker run --rm -p 9100:9100 -d  -e LINODE_TOKEN=MY_TOKEN  ghcr.io/ram-pi/linode
 </details>
 
 <details>
-<summary><b>🔒 Secure LKE Cluster</b> - <code>secure_lke/</code></summary>
+<summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.
 
@@ -133,7 +133,7 @@ Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security f
 </details>
 
 <details>
-<summary><b>🗄️ Secure DBaaS with Bastion Host</b> - <code>secure_dbaas/</code></summary>
+<summary><b>🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
 
 Secure database infrastructure setup using VPC networking and a bastion host for controlled access. Demonstrates best practices for deploying database services with network isolation and a hardened jump server.
 
@@ -149,7 +149,24 @@ Secure database infrastructure setup using VPC networking and a bastion host for
 </details>
 
 <details>
-<summary><b>🧹 Cleanup Utilities</b> - <code>utils/</code></summary>
+<summary><b>🔐 <a href="site2site_vpn/">Site-to-Site VPN with WireGuard</a></b> - <code>site2site_vpn/</code></summary>
+
+Multi-region site-to-site VPN setup using WireGuard, connecting two isolated networks across different Linode datacenters. Infrastructure provisioned with OpenTofu, VPN configured with Ansible.
+
+**Demonstrates:**
+- WireGuard VPN tunnel between two sites
+- Multi-region deployment (Milan & Paris)
+- VLAN networking for isolated hosts
+- Ansible automation for VPN configuration
+- Custom systemd network configuration routing setup
+- Encrypted cross-datacenter connectivity
+
+**Additional tools required:** `ansible`
+
+</details>
+
+<details>
+<summary><b>🧹 <a href="utils/">Cleanup Utilities</a></b> - <code>utils/</code></summary>
 
 Collection of cleanup scripts to remove orphaned or unused Linode resources. Includes a master script that automatically discovers and runs all cleanup utilities.
 
@@ -170,7 +187,7 @@ Collection of cleanup scripts to remove orphaned or unused Linode resources. Inc
 </details>
 
 <details>
-<summary><b>🌐 HTTP API Examples</b> - <code>http_apis/</code></summary>
+<summary><b>🌐 <a href="http_apis/">HTTP API Examples</a></b> - <code>http_apis/</code></summary>
 
 Collection of `.http` files for testing Linode REST APIs using the VS Code REST Client extension. Provides ready-to-use API request templates for common Linode operations.
 
@@ -198,6 +215,8 @@ Collection of `.http` files for testing Linode REST APIs using the VS Code REST 
 - [Helm Documentation](https://helm.sh/docs/)
 - [Linode CLI Documentation](https://www.linode.com/docs/products/tools/cli/get-started/)
 - [jq Manual](https://stedolan.github.io/jq/manual/)
+- [WireGuard Documentation](https://www.wireguard.com/)
+- [Ansible Documentation](https://docs.ansible.com/)
 
 ---
 

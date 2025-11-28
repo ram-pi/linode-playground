@@ -1,0 +1,16 @@
+[Interface]
+PrivateKey = {{ private_key }}
+Address = {{ vpn_ip }}
+ListenPort = 51820
+PostUp = sysctl -w net.ipv4.ip_forward=1
+
+# UPDATED MASQUERADE RULE:
+# Uses {{ lan_interface }} (e.g., eth1) to route traffic correctly
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ lan_interface }} -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ lan_interface }} -j MASQUERADE
+
+[Peer]
+PublicKey = {{ peer_pub_key }}
+Endpoint = {{ peer_endpoint }}:51820
+AllowedIPs = {{ peer_vpn_ip.split('/')[0] }}/32, {{ peer_lan_subnet }}
+PersistentKeepalive = 25

@@ -1,0 +1,92 @@
+---
+- name: 1. Generate Keys Locally
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create keys directory
+      file:
+        path: "keys"
+        state: directory
+
+    - name: Generate WireGuard Keys for all gateways
+      shell: "wg genkey | tee keys/{{ item }}.private | wg pubkey > keys/{{ item }}.public"
+      args:
+        creates: "keys/{{ item }}.private"
+      loop: "{{ groups['vpn_gateways'] }}"
+
+    - name: Load Keys into Ansible Variables
+      set_fact:
+        key_store: "{{ key_store | default({}) | combine({ item: { 'pub': lookup('file', 'keys/' + item + '.public'), 'priv': lookup('file', 'keys/' + item + '.private') } }) }}"
+      loop: "{{ groups['vpn_gateways'] }}"
+
+- name: 2. Configure Gateways
+  hosts: vpn_gateways
+  become: true
+  vars:
+    ansible_user: root
+    ansible_ssh_private_key_file: "{{ ansible_env.TMPDIR | default('/tmp') }}/id_rsa"
+    # Identify who the "Other Guy" is
+    peer_name: "{{ (groups['vpn_gateways'] | difference([inventory_hostname]))[0] }}"
+
+  tasks:
+    - name: Install WireGuard
+      apt:
+        name: wireguard
+        state: present
+        update_cache: yes
+
+    - name: Generate wg0.conf
+      template:
+        src: templates/wg0.conf.j2
+        dest: /etc/wireguard/wg0.conf
+        mode: "0600"
+      notify: Restart WireGuard
+      vars:
+        private_key: "{{ hostvars['localhost']['key_store'][inventory_hostname]['priv'] }}"
+        peer_pub_key: "{{ hostvars['localhost']['key_store'][peer_name]['pub'] }}"
+        peer_endpoint: "{{ hostvars[peer_name]['ansible_host'] }}"
+        peer_vpn_ip: "{{ hostvars[peer_name]['vpn_ip'] }}"
+        peer_lan_subnet: "{{ hostvars[peer_name]['private_lan_subnet'] }}"
+
+    - name: Enable and Start WireGuard
+      systemd:
+        name: wg-quick@wg0
+        state: started
+        enabled: yes
+        # daemon_reload: yes
+
+    - name: Verify Routes (Optional - prints to console)
+      shell: "ip route | grep wg0"
+      register: route_check
+    - debug: msg="{{ route_check.stdout_lines }}"
+
+  handlers:
+    - name: Restart WireGuard
+      systemd:
+        name: wg-quick@wg0
+        state: restarted
+
+- name: 3. Configure Routes on App Servers
+  #hosts: site_1_hosts:site_2_hosts # Run on both groups
+  hosts: site_1_hosts:site_2_hosts
+  become: true
+  tasks:
+    - name: Create systemd network configuration directory
+      file:
+        path: /etc/systemd/network/05-eth0.network.d
+        state: directory
+        mode: '0755'
+
+    - name: Create persistent route via systemd-networkd
+      template:
+        src: templates/route.conf.j2
+        dest: /etc/systemd/network/05-eth0.network.d/custom-routes.conf
+        mode: '0644'
+      notify: Restart networkd
+
+  handlers:
+    - name: Restart networkd
+      systemd:
+        name: systemd-networkd
+        state: restarted
