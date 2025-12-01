@@ -1,0 +1,53 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+runcmd:
+  # Disable SSH password authentication for security
+  - sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - sed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+  - sed -i 's/^#*KbdInteractiveAuthentication.*/KbdInteractiveAuthentication no/' /etc/ssh/sshd_config
+  - systemctl restart sshd
+  # Download and install rclone
+  - curl https://rclone.org/install.sh | sudo bash
+  # Download sample data to test the volumes backup
+  - mkdir -p /mnt/volume1/data
+  - curl -o /mnt/volume1/data/title.ratings.tsv.gz https://datasets.imdbws.com/title.ratings.tsv.gz
+  # extract sample data
+  - gzip -dc /mnt/volume1/data/title.ratings.tsv.gz > /mnt/volume1/data/title.ratings.tsv
+
+# 1. Setup the Disk (Partitioning)
+disk_setup:
+  /dev/sdc:
+    table_type: "gpt" # <--- Use GPT partition table, alternative is 'mbr'
+    layout: true # <--- Create one single partition spanning entire disk, alternative is 'partitions' list i.e. layout: [50, 50]
+    overwrite: false # <--- CRITICAL: Prevents wiping existing data
+  /dev/sdd:
+    table_type: "gpt"
+    layout: [40, 60]
+    overwrite: false
+
+# 2. Setup the Filesystem (Formatting)
+# logic: if filesystem exists, this step is skipped automatically
+fs_setup:
+  # 1. Format SINGLE partition spanning entire disk
+  - label: volume1
+    filesystem: ext4
+    device: /dev/sdc
+    partition: auto # <--- Automatically format partition created in previous step
+  # 2. Format BOTH partitions individually
+  - label: volume2_part1_40
+    filesystem: ext4
+    device: /dev/sdd
+    partition: 1
+  - label: volume2_part1_60
+    filesystem: ext4
+    device: /dev/sdd
+    partition: 2
+
+# 3. Mount the Disk
+mounts:
+  # [ Source, MountPoint, FsType, Options, Dump, Pass ]
+  - [/dev/sdc, /mnt/volume1, "ext4", "defaults,noatime", "0", "2"] # <--- Mount single partition disk
+  - [/dev/sdd1, /mnt/volume2_part1_40, "ext4", "defaults,noatime", "0", "2"] # <--- Mount first partition
+  - [/dev/sdd2, /mnt/volume2_part1_60, "ext4", "defaults,noatime", "0", "2"] # <--- Mount second partition

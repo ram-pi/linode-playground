@@ -40,7 +40,7 @@ resource "linode_instance" "bastion" {
   ]
 
   metadata {
-    user_data = base64encode(file("./scripts/cloud-init.bastion.yaml"))
+    user_data = base64encode(file("./scripts/cloud-init.yaml"))
   }
 
   interface {
@@ -62,4 +62,27 @@ resource "linode_instance" "bastion" {
   private_ip = true
 
   firewall_id = linode_firewall.allow-my-ip-and-internal.id
+
+  backups_enabled  = true
+  watchdog_enabled = true
+
+}
+
+### Additional Volumes for the Linode Instance ###
+# sdc
+resource "linode_volume" "volume-1" {
+  label      = "volume-1"
+  region     = linode_instance.bastion.region
+  linode_id  = linode_instance.bastion.id
+  size       = 20 # Size in GB
+  encryption = "enabled"
+}
+
+# sdd
+resource "linode_volume" "volume-2" {
+  label      = "volume-2"
+  region     = linode_instance.bastion.region
+  linode_id  = linode_instance.bastion.id
+  size       = 10 # Size in GB
+  encryption = "enabled"
 }

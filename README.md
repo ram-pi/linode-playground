@@ -200,6 +200,22 @@ Collection of `.http` files for testing Linode REST APIs using the VS Code REST 
 
 </details>
 
+<details>
+<summary><b>💾 <a href="linode_with_multiple_disks/">Linode with Multiple Disks</a></b> - <code>linode_with_multiple_disks/</code></summary>
+
+Provision a Linode instance with multiple encrypted Block Storage volumes and automated backups to Object Storage. Includes a backup script with rclone, Web UI monitoring, and environment-based configuration.
+
+**Demonstrates:**
+- Multiple encrypted Block Storage volumes attached to single instance
+- Object Storage for volume backups with lifecycle policies
+- Rclone backup automation with Web UI and metrics
+- Environment variable-based configuration
+- Automated backup scheduling with 30-day retention
+
+**Additional tools required:** `rclone` (auto-installed by backup script)
+
+</details>
+
 ## Resources
 
 - [Linode Documentation](https://www.linode.com/docs/)
