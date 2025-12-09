@@ -133,6 +133,24 @@ Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security f
 </details>
 
 <details>
+<summary><b>🤖 <a href="lke_ai_capabilities/">LKE AI Capabilities</a></b> - <code>lke_ai_capabilities/</code></summary>
+
+LKE Enterprise cluster with App Platform for Linode (APL), featuring AI/ML capabilities through KServe and Knative. Complete platform with integrated tooling, serverless workloads, and ML model serving.
+
+**Demonstrates:**
+- App Platform for Linode (APL) deployment
+- AI/ML capabilities with KServe and Knative
+- Magic DNS with nip.io for automatic DNS resolution
+- Object Storage integration (CNPG, Gitea, Harbor, Loki)
+- Cloud Firewall Controller for network security
+- NLP model training and deployment
+- Interactive post-installation workflow
+
+**Additional tools required:** `kubectl`, `helm`, `linode-cli`
+
+</details>
+
+<details>
 <summary><b>🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
 
 Secure database infrastructure setup using VPC networking and a bastion host for controlled access. Demonstrates best practices for deploying database services with network isolation and a hardened jump server.
@@ -181,6 +199,9 @@ Collection of cleanup scripts to remove orphaned or unused Linode resources. Inc
 - Unattached Block Storage volumes
 - All NodeBalancers
 - Private/custom images
+
+**Utility scripts:**
+- `list_all_resources.sh` - List all Linode resources in your account
 
 **Additional tools required:** `linode-cli`, `jq`
 

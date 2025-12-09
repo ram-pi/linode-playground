@@ -13,6 +13,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+terraform.tfvars
 
 # OpenTofu
 .tofu/
@@ -111,3 +112,6 @@ vault-password.txt
 # site2site_vpn
 site2site_vpn/vpn-setup/keys
 site2site_vpn/vpn-setup/hosts.ini
+
+# models
+**/*.joblib

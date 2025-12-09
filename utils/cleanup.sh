@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-set -e
+# Don't use set -e here since we want to continue even if subscripts fail
+# We'll handle errors manually
 
 # Colors for output
 RED='\033[0;31m'

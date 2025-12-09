@@ -1,0 +1,38 @@
+logLevel: debug
+cluster:
+  domainSuffix: 172.236.197.77.nip.io
+  name: dev
+  # provider: custom
+  provider: linode
+  linode:
+    tier: enterprise
+ingress:
+  platformClass:
+    annotations:
+      - key: "service.beta.kubernetes.io/linode-loadbalancer-nodebalancer-id"
+        value: "1924094"
+apps:
+  oauth2-proxy:
+    config:
+      # Disables SSL verification between proxy and Keycloak.
+      sslInsecureSkipVerify: true
+    _rawValues:
+      extraInitContainers:
+        - name: wait-for-keycloak
+          image: curlimages/curl:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            [
+              "while [ $(curl -k -s -w 200 -o /dev/null https://keycloak.172.236.197.77.nip.io) -ne 200 ]; do sleep 2; echo 'Waiting for Keycloak OIDC Issuer URL'; done",
+            ]
+  kserve:
+    enabled: true
+  knative:
+    enabled: true
+kms:
+  sops:
+    provider: age
+otomi:
+  # Since nip.io handles the DNS automatically, we can disable external-dns for now
+  hasExternalDNS: false
+  #aiEnabled: true

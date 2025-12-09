@@ -1,26 +1,29 @@
 resource "linode_lke_cluster" "main" {
-  label       = "main"
-  k8s_version = "1.34" # latest version
+  label = "main"
+  # k8s_version = "1.34" # latest version
+  k8s_version = "v1.31.9+lke7" # latest enterprise version linode-cli lke tiered-versions-list enterprise
   region      = local.region
 
   # Due to certain restrictions in Terraform and LKE,
   # the cluster must be defined with at least one node pool.
   pool {
-    type = "g6-dedicated-4"
+    type = "g6-dedicated-8"
 
     labels = {
       role = "worker"
-      type = "g6-dedicated-4"
+      type = "g6-dedicated-8"
     }
 
     autoscaler {
-      min = 3
+      min = 4
       max = 6
     }
 
   }
 
   apl_enabled = false # Enable/Disable Akamai App Platform
+
+  tier = "enterprise"
 
   control_plane {
     high_availability = true
@@ -35,18 +38,14 @@ resource "linode_lke_cluster" "main" {
   }
 }
 
-
-# resource "linode_lke_node_pool" "pool-1" {
+# resource "linode_lke_node_pool" "gpu-pool" {
 #   cluster_id = linode_lke_cluster.main.id
-#   type       = "g6-dedicated-4"
+#   type       = "g2-gpu-rtx4000a1-s"
 
-#   autoscaler {
-#     min = 3
-#     max = 6
-#   }
+#   node_count = 1
 
 #   labels = {
-#     role = "worker"
-#     type = "g6-dedicated-4"
+#     role = "gpu-worker"
+#     type = "g2-gpu-rtx4000a1-s"
 #   }
 # }
