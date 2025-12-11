@@ -116,3 +116,5 @@ site2site_vpn/vpn-setup/hosts.ini
 # models
 **/*.joblib
 gpu_inference/monitoring/prometheus.yml
+**/CONFLUENCE.md
+tmp
