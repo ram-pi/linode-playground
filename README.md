@@ -151,6 +151,31 @@ LKE Enterprise cluster with App Platform for Linode (APL), featuring AI/ML capab
 </details>
 
 <details>
+<summary><b>🤖 <a href="gpu_inference/">GPU Inference Infrastructure</a></b> - <code>gpu_inference/</code></summary>
+
+Deploy a GPU-powered Linode instance with NVIDIA RTX 4000 Ada for machine learning inference workloads. Includes automatic NVIDIA driver installation, GPU metrics exporter, and optional monitoring stack with Prometheus and Grafana.
+
+**Demonstrates:**
+- GPU instance deployment (g2-gpu-rtx4000a1-m)
+- Automatic NVIDIA driver and CUDA toolkit installation
+- NVIDIA GPU metrics exporter setup
+- Optional Prometheus + Grafana monitoring stack
+- Official NVIDIA GPU dashboard provisioning
+- VPC networking with NAT 1:1
+- Cloud-init package installation
+- Docker Compose orchestration
+
+**Metrics exposed:**
+- GPU utilization and memory usage
+- Temperature, fan speed, and power consumption
+- Clock speeds and throttle reasons
+- Performance states and process info
+
+**Additional tools required:** `Docker`, `Docker Compose` (optional, for monitoring stack)
+
+</details>
+
+<details>
 <summary><b>🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
 
 Secure database infrastructure setup using VPC networking and a bastion host for controlled access. Demonstrates best practices for deploying database services with network isolation and a hardened jump server.
