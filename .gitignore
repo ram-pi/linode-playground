@@ -117,4 +117,11 @@ site2site_vpn/vpn-setup/hosts.ini
 **/*.joblib
 gpu_inference/monitoring/prometheus.yml
 **/CONFLUENCE.md
+
+# experiments
 tmp
+
+# shared_ip_failover generated files
+shared_ip_failover/ansible/inventory.yml
+shared_ip_failover/01-netcfg-*.yaml
+shared_ip_failover/lelastic*.service

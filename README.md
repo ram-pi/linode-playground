@@ -192,6 +192,29 @@ Secure database infrastructure setup using VPC networking and a bastion host for
 </details>
 
 <details>
+<summary><b>⚖️ <a href="shared_ip_failover/">Shared IP for HA Load Balancing</a></b> - <code>shared_ip_failover/</code></summary>
+
+Highly available load balancing solution using Linode's shared IP feature for automatic failover. Combines frontend nodes with shared IP address and backend nodes on a private VLAN, with Lelastic managing automatic failover.
+
+**Demonstrates:**
+- Shared IP address configuration for failover
+- Lelastic daemon for automatic IP failover
+- HAProxy load balancing across backend nodes
+- VLAN for Layer 2 connectivity between frontend and backend
+- Cloud Firewall with internal traffic rules
+- Multi-tier architecture with public/private separation
+- Ansible-based configuration automation
+
+**Architecture:**
+- Two frontend instances (host_01, host_02) sharing a public IP
+- Two backend instances (host_03, host_04) on private VLAN
+- Automatic failover within seconds when active node fails
+
+**Additional tools required:** Ansible (for HAProxy deployment)
+
+</details>
+
+<details>
 <summary><b>🔐 <a href="site2site_vpn/">Site-to-Site VPN with WireGuard</a></b> - <code>site2site_vpn/</code></summary>
 
 Multi-region site-to-site VPN setup using WireGuard, connecting two isolated networks across different Linode datacenters. Infrastructure provisioned with OpenTofu, VPN configured with Ansible.
