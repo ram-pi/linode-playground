@@ -1,0 +1,63 @@
+---
+- name: Install and configure HAProxy on load balancers
+  hosts: haproxy_servers
+  become: yes
+  tasks:
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: present
+        update_cache: yes
+
+    - name: Configure HAProxy
+      copy:
+        dest: /etc/haproxy/haproxy.cfg
+        content: |
+          global
+              log /dev/log local0
+              log /dev/log local1 notice
+              chroot /var/lib/haproxy
+              stats socket /run/haproxy/admin.sock mode 660 level admin
+              stats timeout 30s
+              user haproxy
+              group haproxy
+              daemon
+
+          defaults
+              log     global
+              mode    http
+              option  httplog
+              option  dontlognull
+              timeout connect 5000
+              timeout client  50000
+              timeout server  50000
+
+          frontend http_front
+              bind *:80
+              default_backend nginx_backend
+
+          backend nginx_backend
+              balance roundrobin
+              option httpchk GET /
+              http-check expect status 200
+              server host_03 10.10.100.3:80 check
+              server host_04 10.10.100.4:80 check
+
+          listen stats
+              bind *:8404
+              stats enable
+              stats uri /stats
+              stats refresh 30s
+      notify: Restart HAProxy
+
+    - name: Enable and start HAProxy
+      systemd:
+        name: haproxy
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Restart HAProxy
+      systemd:
+        name: haproxy
+        state: restarted
