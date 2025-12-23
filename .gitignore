@@ -125,3 +125,4 @@ tmp
 shared_ip_failover/ansible/inventory.yml
 shared_ip_failover/01-netcfg-*.yaml
 shared_ip_failover/lelastic*.service
+outfile.jira

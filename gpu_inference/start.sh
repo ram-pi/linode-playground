@@ -49,8 +49,9 @@ echo "You can monitor cloud-init progress by SSHing into the bastion host and ch
 echo " tail -f /var/log/cloud-init-output.log"
 echo ""
 echo "Bastion host should be ready now!"
-echo "Check nvidia-smi output by SSHing into the bastion host:"
+echo "Check nvidia-smi or nvtop output by SSHing into the bastion host:"
 echo "nvidia-smi"
+echo "nvtop"
 HOST_METRICS=$(tofu output -raw scraping_target)
 echo "Check GPU metrics endpoint by running the following command on your local machine:"
 echo "curl http://$HOST_METRICS"

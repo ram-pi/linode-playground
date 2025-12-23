@@ -28,4 +28,5 @@ runcmd:
     apt-get update
     apt-get -y install cuda-toolkit-12-8
     apt-get install -y nvidia-open
+    apt-get install -y nvtop
     reboot

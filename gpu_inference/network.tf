@@ -27,7 +27,7 @@ resource "linode_firewall" "allow-my-ip-and-internal" {
   }
 
   inbound {
-    label    = "allow-udb-from-${local.my_ip_}"
+    label    = "allow-udp-from-${local.my_ip_}"
     action   = "ACCEPT"
     protocol = "UDP"
     ports    = "1-65535"
