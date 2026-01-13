@@ -1,0 +1,105 @@
+# values.yaml
+global:
+  enabled: true
+
+injector:
+  enabled: true
+  # Force the annotation prefix
+  # agentDefaults:
+  #   annotationPrefix: "openbao.org"
+
+server:
+  # Use Rolling Update Strategy for Pod Updates
+  updateStrategy:
+    type: RollingUpdate
+
+  # Enable High Availability (3 replicas)
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      # Define the Raft storage configuration
+      config: |
+        ui = true
+
+        listener "tcp" {
+          tls_disable = 1
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+
+          # Enable unauthenticated metrics on the main listener
+          # Security Note: Only do this if your cluster network is secure.
+          # Alternatively, you can create a second listener just for metrics.
+          telemetry {
+            unauthenticated_metrics_access = true
+          }
+        }
+
+        # Global Telemetry Config (Enables the Prometheus Sink)
+        telemetry {
+          prometheus_retention_time = "30s"
+          disable_hostname = true
+        }
+
+        storage "raft" {
+          path = "/openbao/data"
+
+          # AUTO-JOIN CONFIGURATION
+          # Point to the stable DNS entries of your StatefulSet pods
+          retry_join {
+            leader_api_addr = "http://openbao-0.openbao-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://openbao-1.openbao-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://openbao-2.openbao-internal:8200"
+          }
+        }
+
+        # STATIC AUTO-UNSEAL CONFIGURATION
+        seal "static" {
+          current_key     = "file:///openbao/unseal/current_key"
+          current_key_id  = "${STATIC_KEY_ID}"
+        }
+
+        service_registration "kubernetes" {}
+
+  # Persistent Storage for Raft Data
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: null # Set to your storage class if not using default
+    mountPath: "/openbao/data"
+
+  # Mount the Auto-Unseal Secret into the Pods
+  volumes:
+    - name: unseal-key
+      secret:
+        secretName: openbao-unseal-key
+
+  volumeMounts:
+    - name: unseal-key
+      mountPath: "/openbao/unseal"
+      readOnly: true
+
+  # Inject the Key ID as an environment variable (needed for the config above)
+  extraEnv:
+    - name: STATIC_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: openbao-unseal-key
+          key: current_key_id
+
+# Enable the OpenBao CSI Provider
+csi:
+  enabled: true
+  daemonSet:
+    enabled: true
+
+# Enable the UI
+ui:
+  enabled: true
+  serviceType: ClusterIP

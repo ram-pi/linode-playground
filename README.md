@@ -151,6 +151,22 @@ LKE Enterprise cluster with App Platform for Linode (APL), featuring AI/ML capab
 </details>
 
 <details>
+<summary><b>🔐 <a href="secrets_management/">Secret Management on LKE with OpenBao</a></b> - <code>secrets_management/</code></summary>
+
+Comprehensive secrets management solution for Kubernetes using OpenBao (open-source Vault alternative). Demonstrates HA cluster deployment with auto-unsealing, multiple secret injection methods, and integration with External Secrets Operator.
+
+**Demonstrates:**
+- High Availability OpenBao cluster with Raft storage backend
+- Auto-unsealing with static key-based automatic unsealing
+- Multiple secret injection methods (CSI Driver, Injector sidecar, External Secrets Operator)
+- Prometheus metrics exposure for monitoring
+- Kubernetes-native ServiceAccount-based authentication
+
+**Additional tools required:** `kubectl`, `helm`
+
+</details>
+
+<details>
 <summary><b>🤖 <a href="gpu_inference/">GPU Inference Infrastructure</a></b> - <code>gpu_inference/</code></summary>
 
 Deploy a GPU-powered Linode instance with NVIDIA RTX 4000 Ada for machine learning inference workloads. Includes automatic NVIDIA driver installation, GPU metrics exporter, and optional monitoring stack with Prometheus and Grafana.

@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-sa
+  namespace: default
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: openbao-db-creds
+  namespace: default
+spec:
+  # The provider name for OpenBao is "openbao"
+  provider: openbao
+  parameters:
+    roleName: "csi-role"
+
+    # Map OpenBao Secret Paths to Files
+    objects: |
+      - objectName: "db-password"
+        secretPath: "secret/data/my-csi-app"
+        secretKey: "password"
+      - objectName: "db-username"
+        secretPath: "secret/data/my-csi-app"
+        secretKey: "username"
+
+    # Connection details (Internal cluster address)
+    vaultAddress: "http://openbao-active.openbao.svc.cluster.local:8200"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-demo-pod
+  namespace: default
+spec:
+  serviceAccountName: csi-sa
+  restartPolicy: Never
+  containers:
+    - name: web-server
+      image: nginx:alpine
+      volumeMounts:
+        - name: secrets-mount
+          mountPath: "/mnt/secrets"
+          readOnly: true
+  volumes:
+    - name: secrets-mount
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: "openbao-db-creds"

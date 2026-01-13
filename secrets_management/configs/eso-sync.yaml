@@ -1,0 +1,29 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: my-eso-sync
+  namespace: default
+spec:
+  refreshInterval: "15s" # How often to check for updates
+  secretStoreRef:
+    name: openbao-store
+    kind: SecretStore
+
+  # The Target Kubernetes Secret to create
+  target:
+    name: my-native-secret
+    creationPolicy: Owner # Delete K8s secret if this resource is deleted
+
+  # Mapping Logic
+  data:
+    # Key 1: 'k8s-api-key' in Kubernetes <--- 'api-key' in OpenBao
+    - secretKey: k8s-api-key
+      remoteRef:
+        key: secret/eso-demo
+        property: api-key
+
+    # Key 2: 'k8s-env' in Kubernetes <--- 'environment' in OpenBao
+    - secretKey: k8s-env
+      remoteRef:
+        key: secret/eso-demo
+        property: environment

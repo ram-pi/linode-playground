@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: injector-sa
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: injector-demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: injector-demo
+  template:
+    metadata:
+      labels:
+        app: injector-demo
+      annotations:
+        # 1. Enable the Injector
+        openbao.org/agent-inject: "true"
+        vault.hashicorp.com/agent-inject: "true"
+
+        # 2. Which role to use
+        openbao.org/role: "injector-role"
+        vault.hashicorp.com/role: "injector-role"
+
+        # 3. Define the data source
+        openbao.org/agent-inject-secret-application.properties: "secret/data/my-app-config"
+        vault.hashicorp.com/agent-inject-secret-application.properties: "secret/data/my-app-config"
+    spec:
+      serviceAccountName: injector-sa
+      containers:
+        - name: web-server
+          image: nginx:alpine
+          # The secret is mounted at /vault/secrets/ by default
+          # You can verify it exists
+          command:
+            [
+              "sh",
+              "-c",
+              "cat /vault/secrets/application.properties && sleep 3600",
+            ]
