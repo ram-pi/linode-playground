@@ -7,6 +7,9 @@ Exposes Linode resource metrics in Prometheus format.
 
 import os
 import time
+import signal
+import sys
+import threading
 from prometheus_client import start_http_server, Gauge
 from linode_api4 import LinodeClient
 
@@ -20,6 +23,10 @@ linode_lke_e_clusters_total = Gauge('linode_lke_e_clusters_total', 'Total number
 linode_tokens_total = Gauge('linode_tokens_total', 'Total number of API tokens', ['account_name'])
 linode_firewalls_total = Gauge('linode_firewalls_total', 'Total number of Cloud Firewalls', ['account_name'])
 linode_nodebalancers_total = Gauge('linode_nodebalancers_total', 'Total number of NodeBalancers', ['account_name'])
+linode_nodebalancer_transfer_in_mb = Gauge('linode_nodebalancer_transfer_in_mb', 'NodeBalancer inbound transfer in MB', ['account_name', 'nodebalancer_id', 'nodebalancer_label'])
+linode_nodebalancer_transfer_out_mb = Gauge('linode_nodebalancer_transfer_out_mb', 'NodeBalancer outbound transfer in MB', ['account_name', 'nodebalancer_id', 'nodebalancer_label'])
+linode_nodebalancer_transfer_total_mb = Gauge('linode_nodebalancer_transfer_total_mb', 'NodeBalancer total transfer in MB', ['account_name', 'nodebalancer_id', 'nodebalancer_label'])
+linode_nodebalancer_client_conn_throttle = Gauge('linode_nodebalancer_client_conn_throttle', 'NodeBalancer client connection throttle', ['account_name', 'nodebalancer_id', 'nodebalancer_label'])
 linode_databases_total = Gauge('linode_databases_total', 'Total number of Managed Databases', ['account_name'])
 linode_users_total = Gauge('linode_users_total', 'Total number of users on the account', ['account_name'])
 linode_vlans_total = Gauge('linode_vlans_total', 'Total number of VLANs', ['account_name'])
@@ -64,8 +71,9 @@ class LinodeExporter:
             lke_e_count = 0
 
             for cluster in lke_clusters:
-                # LKE-e clusters have control_plane.high_availability = true
-                if hasattr(cluster, 'control_plane') and cluster.control_plane.get('high_availability', False):
+                # LKE-e clusters have tier = enterprise
+                cluster_tier = getattr(cluster, 'tier', 'standard')
+                if cluster_tier == 'enterprise':
                     lke_e_count += 1
                 else:
                     lke_standard_count += 1
@@ -85,10 +93,47 @@ class LinodeExporter:
             linode_firewalls_total.labels(account_name=account_name).set(len(firewalls))
             print(f"Cloud Firewalls: {len(firewalls)}")
 
-            # Count NodeBalancers
+            # Count NodeBalancers and collect traffic metrics
             nodebalancers = self.client.nodebalancers()
             linode_nodebalancers_total.labels(account_name=account_name).set(len(nodebalancers))
             print(f"NodeBalancers: {len(nodebalancers)}")
+
+            # Collect detailed NodeBalancer metrics
+            for nb in nodebalancers:
+                nb_id = str(nb.id)
+                nb_label = nb.label
+
+                # Set transfer metrics (values are in MB from API)
+                transfer_in = getattr(nb.transfer, 'in', 0) if nb.transfer else 0
+                transfer_out = getattr(nb.transfer, 'out', 0) if nb.transfer else 0
+                transfer_total = getattr(nb.transfer, 'total', 0) if nb.transfer else 0
+
+                linode_nodebalancer_transfer_in_mb.labels(
+                    account_name=account_name,
+                    nodebalancer_id=nb_id,
+                    nodebalancer_label=nb_label
+                ).set(transfer_in)
+
+                linode_nodebalancer_transfer_out_mb.labels(
+                    account_name=account_name,
+                    nodebalancer_id=nb_id,
+                    nodebalancer_label=nb_label
+                ).set(transfer_out)
+
+                linode_nodebalancer_transfer_total_mb.labels(
+                    account_name=account_name,
+                    nodebalancer_id=nb_id,
+                    nodebalancer_label=nb_label
+                ).set(transfer_total)
+
+                # Set throttle metric
+                linode_nodebalancer_client_conn_throttle.labels(
+                    account_name=account_name,
+                    nodebalancer_id=nb_id,
+                    nodebalancer_label=nb_label
+                ).set(nb.client_conn_throttle)
+
+                print(f"  - {nb_label} (ID: {nb_id}): in={transfer_in:.2f}MB, out={transfer_out:.2f}MB, total={transfer_total:.2f}MB, throttle={nb.client_conn_throttle}")
 
             # Count Managed Databases
             databases = self.client.database.instances()
@@ -143,12 +188,29 @@ def main():
     # Initialize exporter
     exporter = LinodeExporter(api_token)
 
+    # Setup signal handler for graceful shutdown
+    shutdown_event = threading.Event()
+
+    def signal_handler(signum, frame):
+        print("\nShutdown signal received, stopping exporter...")
+        shutdown_event.set()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     # Collect metrics in a loop
-    while True:
-        exporter.collect_metrics()
-        print(f"Waiting {scrape_interval} seconds until next scrape...")
-        print("-" * 50)
-        time.sleep(scrape_interval)
+    try:
+        while not shutdown_event.is_set():
+            exporter.collect_metrics()
+            print(f"Waiting {scrape_interval} seconds until next scrape...")
+            print("-" * 50)
+            # Use wait instead of sleep to allow interruption
+            shutdown_event.wait(scrape_interval)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print("Exporter stopped")
+        sys.exit(0)
 
 
 if __name__ == '__main__':

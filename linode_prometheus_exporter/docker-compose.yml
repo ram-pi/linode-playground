@@ -9,6 +9,7 @@ services:
       - LINODE_TOKEN=${LINODE_TOKEN}
       - EXPORTER_PORT=9100
       - SCRAPE_INTERVAL=60
+      - PYTHONUNBUFFERED=1
     networks:
       - monitoring
 

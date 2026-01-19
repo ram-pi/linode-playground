@@ -27,9 +27,9 @@ echo ""
 
 # Use docker compose or docker-compose depending on what's available
 if docker compose version &> /dev/null 2>&1; then
-    docker compose up -d
+    docker compose up -d --build
 else
-    docker-compose up -d
+    docker-compose up -d --build
 fi
 
 echo ""

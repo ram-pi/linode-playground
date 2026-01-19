@@ -24,6 +24,7 @@ EXPOSE 9100
 # Set default environment variables
 ENV EXPORTER_PORT=9100
 ENV SCRAPE_INTERVAL=60
+ENV PYTHONUNBUFFERED=1
 
 # Run the exporter
-CMD ["python", "exporter.py"]
+CMD ["python", "-u", "exporter.py"]
