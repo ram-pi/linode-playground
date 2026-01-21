@@ -1,0 +1,25 @@
+# httproute.yaml - api routing
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-route-main
+  namespace: web-demo
+  annotations:
+    # ExternalDNS creates A record for this hostname
+    external-dns.alpha.kubernetes.io/hostname: api.${DOMAIN}.
+    external-dns.alpha.kubernetes.io/ttl: "300" # 5 minutes
+spec:
+  parentRefs:
+    - name: main-gateway
+  hostnames:
+    - api.${DOMAIN}
+  rules:
+    # Default - everything else
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: nginx
+          port: 80
+---

@@ -151,6 +151,32 @@ LKE Enterprise cluster with App Platform for Linode (APL), featuring AI/ML capab
 </details>
 
 <details>
+<summary><b>🌐 <a href="proxy_chaining/">Proxy Chaining with Envoy Gateway</a></b> - <code>proxy_chaining/</code></summary>
+
+Production-ready demonstration of advanced gateway routing patterns using Envoy Gateway and Kubernetes Gateway API. Shows multi-backend routing with in-cluster services and external Object Storage, automated DNS management, and TLS certificate provisioning.
+
+**Demonstrates:**
+- Kubernetes Gateway API with Envoy Gateway
+- Multi-subdomain routing with distinct backends
+- External backend integration (Object Storage via Backend CRD)
+- Automated DNS management with ExternalDNS
+- Automatic TLS certificates via cert-manager and Let's Encrypt
+- High-availability LKE cluster with control plane ACLs
+- Host header rewriting for S3-compatible storage
+- TLS backend connections with SNI
+
+**Architecture:**
+- Gateway with multiple HTTPS listeners (api.domain.com, static.domain.com)
+- In-cluster routing to Nginx service
+- External routing to Linode Object Storage with TLS
+- Automatic certificate issuance and renewal
+- DNS record automation in Linode DNS
+
+**Additional tools required:** `kubectl`, `helm`, domain from external registrar (e.g., Namecheap) with Linode nameservers configured
+
+</details>
+
+<details>
 <summary><b>🔐 <a href="secrets_management/">Secret Management on LKE with OpenBao</a></b> - <code>secrets_management/</code></summary>
 
 Comprehensive secrets management solution for Kubernetes using OpenBao (open-source Vault alternative). Demonstrates HA cluster deployment with auto-unsealing, multiple secret injection methods, and integration with External Secrets Operator.
