@@ -161,8 +161,8 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "linode_nodebalancer_transfer_in_mb{nodebalancer_label=~\"$nodebalancer\"}",
-                    "legendFormat": "Inbound",
+                    "expr": "rate(linode_nodebalancer_transfer_in_mb{nodebalancer_label=~\"$nodebalancer\"}[5m]) * 60",
+                    "legendFormat": "Inbound (MB/min)",
                     "refId": "A"
                 },
                 {
@@ -170,12 +170,12 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "linode_nodebalancer_transfer_out_mb{nodebalancer_label=~\"$nodebalancer\"}",
-                    "legendFormat": "Outbound",
+                    "expr": "rate(linode_nodebalancer_transfer_out_mb{nodebalancer_label=~\"$nodebalancer\"}[5m]) * 60",
+                    "legendFormat": "Outbound (MB/min)",
                     "refId": "B"
                 }
             ],
-            "title": "Transfer In/Out",
+            "title": "Transfer In/Out (Rate/min)",
             "type": "timeseries"
         },
         {
@@ -259,12 +259,12 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "linode_nodebalancer_transfer_total_mb{nodebalancer_label=~\"$nodebalancer\"}",
-                    "legendFormat": "Total",
+                    "expr": "(rate(linode_nodebalancer_transfer_in_mb{nodebalancer_label=~\"$nodebalancer\"}[5m]) + rate(linode_nodebalancer_transfer_out_mb{nodebalancer_label=~\"$nodebalancer\"}[5m])) * 60",
+                    "legendFormat": "Total (MB/min)",
                     "refId": "A"
                 }
             ],
-            "title": "Total Transfer",
+            "title": "Total Transfer (Rate/min)",
             "type": "timeseries"
         },
         {
@@ -326,12 +326,12 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "linode_nodebalancer_client_conn_throttle{nodebalancer_label=~\"$nodebalancer\"}",
-                    "legendFormat": "{{nodebalancer_label}}",
+                    "expr": "rate(linode_nodebalancer_client_conn_throttle{nodebalancer_label=~\"$nodebalancer\"}[5m])",
+                    "legendFormat": "{{nodebalancer_label}} (throttle/min)",
                     "refId": "A"
                 }
             ],
-            "title": "Client Connection Throttle",
+            "title": "Client Connection Throttle (Rate/min)",
             "type": "bargauge"
         }
     ],
