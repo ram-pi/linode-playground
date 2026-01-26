@@ -32,7 +32,7 @@ resource "linode_lke_cluster" "main" {
     acl {
       enabled = true
       addresses {
-        ipv4 = concat(var.ipv4_whitelist_cidrs, [tolist(linode_instance.host_01.ipv4[*])[0] + "/32"])
+        ipv4 = var.ipv4_whitelist_cidrs
       }
     }
   }

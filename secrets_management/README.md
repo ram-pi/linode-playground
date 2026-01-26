@@ -57,7 +57,7 @@ exit
 
 ### Troubleshooting
 
-#### Join other nodes (Raft)
+#### Raft join
 
 It should be done automatically, if not you can run the following commands:
 
