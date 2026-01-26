@@ -130,3 +130,5 @@ template
 secrets_management/cluster-keys.json
 secrets_management/master.key
 secrets_management/master.key.id
+multi_cluster_discovery/kubeconfig-cluster-01
+multi_cluster_discovery/kubeconfig-cluster-02

@@ -177,6 +177,22 @@ Production-ready demonstration of advanced gateway routing patterns using Envoy 
 </details>
 
 <details>
+<summary><b>🔗 <a href="multi_cluster_discovery/">Multi-Cluster Discovery with Skupper</a></b> - <code>multi_cluster_discovery/</code></summary>
+
+Connect two LKE clusters with Skupper v2 to enable cross-cluster service communication without exposing services publicly.
+
+**Demonstrates:**
+- Skupper Virtual Application Network across clusters
+- Token-based linking between clusters
+- Listener/connector pattern for exporting services
+- Curl test pod consuming the podinfo service
+- Automated setup via `skupper-setup.sh`
+
+**Additional tools required:** `kubectl`, `skupper`, `helm` (for Skupper console)
+
+</details>
+
+<details>
 <summary><b>🔐 <a href="secrets_management/">Secret Management on LKE with OpenBao</a></b> - <code>secrets_management/</code></summary>
 
 Comprehensive secrets management solution for Kubernetes using OpenBao (open-source Vault alternative). Demonstrates HA cluster deployment with auto-unsealing, multiple secret injection methods, and integration with External Secrets Operator.
