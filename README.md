@@ -234,7 +234,38 @@ Deploy a GPU-powered Linode instance with NVIDIA RTX 4000 Ada for machine learni
 </details>
 
 <details>
-<summary><b>🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
+<summary><b>� <a href="genai-perf/">GenAI Performance Benchmarking</a></b> - <code>genai-perf/</code></summary>
+
+Comprehensive LLM inference benchmarking on GPU instances using NVIDIA NIM (NVIDIA Inference Microservices) and GenAI-Perf. Deploy and benchmark various LLM models with different precision formats to measure Time-To-First-Token (TTFT), throughput, and resource utilization.
+
+**Demonstrates:**
+- NVIDIA NIM container deployment with vLLM/TensorRT-LLM backends
+- GenAI-Perf tool for LLM performance benchmarking
+- NGC (NVIDIA GPU Cloud) image management and authentication
+- Model profile selection and optimization (FP16, BF16, FP8, INT4, NVFP4)
+- OpenAI-compatible API endpoint testing
+- Docker-based inference server with GPU passthrough
+- Synthetic workload generation with configurable token lengths
+- Performance metrics collection (TTFT, inter-token latency, throughput)
+- GPU memory optimization and cache management
+
+**Key Metrics:**
+- Time To First Token (TTFT): Measures user-facing responsiveness
+- Inter-Token Latency: Evaluates streaming quality
+- Request Latency: Assesses end-to-end performance
+- Token Throughput: Determines model capacity
+
+**Supported Models:**
+- Microsoft Phi-3 Mini (4K context)
+- Meta Llama family
+- Other NGC-available models
+
+**Additional tools required:** `Docker`, NVIDIA GPU drivers, NGC API key
+
+</details>
+
+<details>
+<summary><b>�🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
 
 Secure database infrastructure setup using VPC networking and a bastion host for controlled access. Demonstrates best practices for deploying database services with network isolation and a hardened jump server.
 
