@@ -1,0 +1,82 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - jq
+  - build-essential
+  - python3-pip
+  - python3-venv
+  - curl
+  - gnupg
+  - gnupg2
+  - lsb-release
+  - rdma-core
+  - ibverbs-utils
+
+write_files:
+  - path: /etc/security/limits.d/99-ai-tuning.conf
+    content: |
+      * soft nofile 65536
+      * hard nofile 65536
+      root soft nofile 65536
+      root hard nofile 65536
+    owner: root:root
+    permissions: "0644"
+
+  - path: /etc/sysctl.d/99-ai-tuning.conf
+    content: |
+      fs.file-max = 2097152
+    owner: root:root
+    permissions: "0644"
+
+runcmd:
+  # Disable SSH password authentication for security
+  - sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - sed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+  - sed -i 's/^#*KbdInteractiveAuthentication.*/KbdInteractiveAuthentication no/' /etc/ssh/sshd_config
+  - systemctl restart sshd
+  # Install NVIDIA drivers - CUDA 12.8 for Ubuntu 24.04 - https://developer.nvidia.com/cuda-12-8-1-download-archive
+  - |
+    export DEBIAN_FRONTEND=noninteractive
+    apt install -y linux-headers-$(uname -r)
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+    dpkg -i cuda-keyring_1.1-1_all.deb
+    apt-get update
+    # apt-get -y install cuda-toolkit-12-8 # Optional: Install CUDA toolkit
+    apt-get install -y nvidia-open
+    apt-get install -y nvtop
+  # Install Docker
+  - |
+    apt-get install -y ca-certificates curl gnupg lsb-release
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    systemctl enable docker
+    systemctl start docker
+  # Install NVIDIA Container Toolkit
+  - |
+    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+    && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+    apt-get update
+    export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.18.1-1
+    apt-get install -y \
+      nvidia-container-toolkit=${NVIDIA_CONTAINER_TOOLKIT_VERSION} \
+      nvidia-container-toolkit-base=${NVIDIA_CONTAINER_TOOLKIT_VERSION} \
+      libnvidia-container-tools=${NVIDIA_CONTAINER_TOOLKIT_VERSION} \
+      libnvidia-container1=${NVIDIA_CONTAINER_TOOLKIT_VERSION}
+    nvidia-ctk runtime configure --runtime=docker
+    systemctl restart docker
+  # Install nvidia_gpu_exporter
+  - |
+    cd /tmp
+    wget https://github.com/utkuozdemir/nvidia_gpu_exporter/releases/download/v1.4.1/nvidia-gpu-exporter_1.4.1_linux_amd64.deb
+    dpkg -i nvidia-gpu-exporter_1.4.1_linux_amd64.deb
+  # Reboot
+  - |
+    sysctl --system
+    reboot
