@@ -6,7 +6,7 @@ locals {
   # Note: On Windows, we often use the environment variable $env:TEMP in PowerShell
   # or a fixed path like C:/Windows/Temp if permissions allow.
   temp_path       = local.is_windows ? "$env:TEMP" : "/tmp"
-  linode_gpu_type = "g2-gpu-rtx4000a1-m"
+  linode_gpu_type = "g2-gpu-rtx4000a2-m"
   linode_image    = "linode/ubuntu24.04"
 }
 

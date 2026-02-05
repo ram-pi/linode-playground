@@ -3,6 +3,7 @@ package_update: true
 package_upgrade: true
 
 packages:
+  - cmake
   - jq
   - build-essential
   - python3-pip
@@ -43,7 +44,7 @@ runcmd:
     wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
     dpkg -i cuda-keyring_1.1-1_all.deb
     apt-get update
-    # apt-get -y install cuda-toolkit-12-8 # Optional: Install CUDA toolkit
+    apt-get -y install cuda-toolkit
     apt-get install -y nvidia-open
     apt-get install -y nvtop
   # Install Docker

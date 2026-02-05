@@ -14,6 +14,10 @@ output "prometheus_scrape_config" {
   - job_name: "nvidia"
     static_configs:
       - targets: ["${local.public_ip}:9835"]
+  - job_name: "nim"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["${local.public_ip}:8000"]
 EOT
 }
 

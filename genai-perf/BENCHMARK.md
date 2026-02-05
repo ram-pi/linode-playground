@@ -216,6 +216,56 @@ Tune the benchmark by changing input/output tokens
 └──────────────────────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
+## Useful commands
+
+GPU topology overview: `nvidia-smi topo -m`
+
+NVLink Support: `nvidia-smi nvlink --status`
+
+P2P Check and benchmarking:
+```bash
+nvidia-smi topo -p2p r
+nvidia-smi topo -p2p w
+nvidia-smi topo -p2p n
+```
+
+System NUMA layout:
+```bash
+numactl --hardware
+lscpu | grep -E "Socket|NUMA"
+```
+
+IOMMU (I/O Memory Management Unit):
+```bash
+dmesg | grep -i iommu
+```
+
+**nccl** and **nvbandwidth** benchmarks:
+```bash
+# nvbandwitdh
+git clone https://github.com/nvidia/nvbandwidth
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+cd nvbandwidth
+./debian_install.sh
+cmake .
+make
+./nvbandwidth -t device_to_device_memcpy_read_ce
+./nvbandwidth -t device_to_device_memcpy_write_ce
+
+# nccl-test
+git clone https://github.com/NVIDIA/nccl-tests.git
+apt install libnccl2
+apt install libnccl-dev
+cd nccl-tests
+make
+./build/all_reduce_perf -b 8 -e 1024M -f 2 -g 2
+NCCL_P2P_DISABLE=1  ./build/all_reduce_perf -b 8 -e 1024M -f 2 -g 2
+```
+
+
+
+
 ## References
 
 - [https://docs.nvidia.com/nim/large-language-models/latest/benchmarking.html](https://docs.nvidia.com/nim/large-language-models/latest/benchmarking.html)
