@@ -2,8 +2,12 @@ locals {
   private_ips_range = "192.168.128.0/17"
 }
 
+resource "random_id" "suffix" {
+  byte_length = 2
+}
+
 resource "linode_firewall" "allow-my-ip" {
-  label = "allow-${local.my_ip_}"
+  label = "allow-${local.my_ip_}-${random_id.suffix.dec}"
 
   inbound {
     label    = "allow-tcp-from-${local.my_ip_}"
@@ -58,18 +62,18 @@ resource "linode_firewall" "allow-my-ip" {
 }
 
 resource "linode_vpc" "main" {
-  label  = "main"
+  label  = "main-${random_id.suffix.dec}"
   region = local.region
 }
 
 resource "linode_vpc_subnet" "subnet-1" {
   vpc_id = linode_vpc.main.id
-  label  = "subnet-1"
+  label  = "subnet-1-${random_id.suffix.dec}"
   ipv4   = "10.10.1.0/24"
 }
 
 resource "linode_vpc_subnet" "subnet-2" {
   vpc_id = linode_vpc.main.id
-  label  = "subnet-2"
+  label  = "subnet-2-${random_id.suffix.dec}"
   ipv4   = "10.10.2.0/24"
 }

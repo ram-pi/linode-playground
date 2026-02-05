@@ -17,19 +17,19 @@ resource "tls_private_key" "ssh_key" {
 # Save private key to local file
 resource "local_file" "private_key" {
   content         = tls_private_key.ssh_key.private_key_openssh
-  filename        = "${local.temp_path}/id_rsa"
+  filename        = "${local.temp_path}/id_rsa-${random_id.suffix.dec}"
   file_permission = "0600"
 }
 
 # Save public key to local file
 resource "local_file" "public_key" {
   content         = tls_private_key.ssh_key.public_key_openssh
-  filename        = "${local.temp_path}/id_rsa.pub"
+  filename        = "${local.temp_path}/id_rsa-${random_id.suffix.dec}.pub"
   file_permission = "0644"
 }
 
 resource "linode_instance" "bastion" {
-  label  = "bastion"
+  label  = "bastion-${random_id.suffix.dec}"
   image  = "linode/ubuntu24.04"
   region = local.region
   type   = "g6-nanode-1"

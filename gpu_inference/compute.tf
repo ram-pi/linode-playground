@@ -16,17 +16,21 @@ resource "tls_private_key" "ssh_key" {
   rsa_bits  = 4096
 }
 
+resource "random_id" "suffix" {
+  byte_length = 2
+}
+
 # Save private key to local file
 resource "local_file" "private_key" {
   content         = tls_private_key.ssh_key.private_key_openssh
-  filename        = "${local.temp_path}/id_rsa"
+  filename        = "${local.temp_path}/id_rsa-${random_id.suffix.dec}"
   file_permission = "0600"
 }
 
 # Save public key to local file
 resource "local_file" "public_key" {
   content         = tls_private_key.ssh_key.public_key_openssh
-  filename        = "${local.temp_path}/id_rsa.pub"
+  filename        = "${local.temp_path}/id_rsa-${random_id.suffix.dec}.pub"
   file_permission = "0644"
 }
 
