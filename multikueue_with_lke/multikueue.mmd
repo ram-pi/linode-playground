@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant User
+    participant Manager as Manager Cluster<br/>(cluster-01)
+    participant Worker as Worker Cluster<br/>(cluster-02)
+
+    User->>Manager: Submit Job/Workload
+    Manager->>Manager: Evaluate ClusterQueue & AdmissionCheck
+    Manager->>Manager: MultiKueue decides target cluster
+
+    Manager->>Worker: Deploy workload to Worker
+    Worker->>Worker: Execute job (e.g., GPU workload)
+    Manager->>Worker: Check status/completion
+    Manager->>User: Job completed

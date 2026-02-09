@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: debug-gpu-job
+  labels:
+    kueue.x-k8s.io/queue-name: user-queue
+spec:
+  template:
+    spec:
+      containers:
+        - name: sleep
+          image: ubuntu
+          command: ["sleep", "600"]
+          resources:
+            requests:
+              cpu: 100m
+            limits:
+              nvidia.com/gpu: 1 # Requesting the GPU
+      restartPolicy: Never

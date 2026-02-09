@@ -234,7 +234,7 @@ Deploy a GPU-powered Linode instance with NVIDIA RTX 4000 Ada for machine learni
 </details>
 
 <details>
-<summary><b>� <a href="genai-perf/">GenAI Performance Benchmarking</a></b> - <code>genai-perf/</code></summary>
+<summary><b>⚡ <a href="genai-perf/">GenAI Performance Benchmarking</a></b> - <code>genai-perf/</code></summary>
 
 Comprehensive LLM inference benchmarking on GPU instances using NVIDIA NIM (NVIDIA Inference Microservices) and GenAI-Perf. Deploy and benchmark various LLM models with different precision formats to measure Time-To-First-Token (TTFT), throughput, and resource utilization.
 
@@ -265,7 +265,23 @@ Comprehensive LLM inference benchmarking on GPU instances using NVIDIA NIM (NVID
 </details>
 
 <details>
-<summary><b>�🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
+<summary><b>🧭 <a href="multikueue_with_lke/">MultiKueue Proof of Concept</a></b> - <code>multikueue_with_lke/</code></summary>
+
+MultiKueue demonstration with two LKE clusters: one manager cluster orchestrates workloads and one worker cluster executes them. Shows how remote execution works with Kueue admission checks and cross-cluster status reporting.
+
+**Demonstrates:**
+- MultiKueue manager/worker topology
+- Cross-cluster workload scheduling
+- ClusterQueue and AdmissionCheck wiring
+- GPU job submission via manager cluster
+- Manager-to-worker connectivity using kubeconfig secrets
+
+**Additional tools required:** `kubectl`, `helm`
+
+</details>
+
+<details>
+<summary><b>🔐🗄️ <a href="secure_dbaas/">Secure DBaaS with Bastion Host</a></b> - <code>secure_dbaas/</code></summary>
 
 Secure database infrastructure setup using VPC networking and a bastion host for controlled access. Demonstrates best practices for deploying database services with network isolation and a hardened jump server.
 
