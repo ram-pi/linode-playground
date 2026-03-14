@@ -1,0 +1,8 @@
+@base_url = https://api.linode.com/v4
+@base_url_v4beta = https://api.linode.com/v4beta
+@region = it-mil
+
+### List VPC Networks
+GET {{base_url_v4beta}}/vpcs
+Accept: application/json
+Authorization: Bearer {{linode_token}}

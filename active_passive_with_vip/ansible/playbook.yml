@@ -1,0 +1,159 @@
+---
+- name: Install and configure FRR for BGP failover
+  hosts: frr_nodes
+  become: true
+  vars:
+    frr_channel: frr-stable
+    enable_keepalived: false
+  tasks:
+    - name: Install prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Ensure FRR apt key exists
+      shell: |
+        set -euo pipefail
+        curl -s https://deb.frrouting.org/frr/keys.asc | apt-key add -
+      args:
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Add FRR apt repository
+      shell: |
+        set -euo pipefail
+        codename="$(lsb_release -s -c)"
+        echo "deb https://deb.frrouting.org/frr ${codename} {{ frr_channel }}" > /etc/apt/sources.list.d/frr.list
+      args:
+        executable: /bin/bash
+
+    - name: Install FRR packages
+      apt:
+        name:
+          - frr
+          - frr-pythontools
+        state: present
+        update_cache: yes
+
+    - name: Enable bgpd daemon
+      lineinfile:
+        path: /etc/frr/daemons
+        regexp: "^bgpd="
+        line: bgpd=yes
+
+    - name: Detect VLAN interface from configured VLAN IP
+      shell: |
+        set -euo pipefail
+        ip -o -4 addr show | awk '$4 ~ /^{{ vlan_ip }}\// {print $2; exit}'
+      args:
+        executable: /bin/bash
+      register: vlan_iface_cmd
+      changed_when: false
+
+    - name: Fail if VLAN interface was not detected
+      fail:
+        msg: "Could not detect VLAN interface for VLAN IP {{ vlan_ip }}"
+      when: vlan_iface_cmd.stdout | trim == ""
+
+    - name: Set VLAN interface fact
+      set_fact:
+        vlan_interface: "{{ vlan_iface_cmd.stdout | trim }}"
+
+    - name: Ensure shared VIP is present on primary
+      shell: |
+        set -euo pipefail
+        if ! ip addr show dev {{ vlan_interface }} | grep -q "{{ vlan_vip }}/32"; then
+          ip addr add {{ vlan_vip }}/32 dev {{ vlan_interface }}
+        fi
+      args:
+        executable: /bin/bash
+      when: node_role == "primary"
+
+    - name: Ensure shared VIP is removed on secondary
+      shell: |
+        set -euo pipefail
+        if ip addr show dev {{ vlan_interface }} | grep -q "{{ vlan_vip }}/32"; then
+          ip addr del {{ vlan_vip }}/32 dev {{ vlan_interface }}
+        fi
+      args:
+        executable: /bin/bash
+      when: node_role == "secondary"
+
+    - name: Persist VLAN VIP across reboot
+      copy:
+        dest: /etc/systemd/system/vlan-vip.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Configure VLAN VIP for FRR failover
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c "if [ '{{ node_role }}' = 'primary' ]; then ip addr show dev {{ vlan_interface }} | grep -q '{{ vlan_vip }}/32' || ip addr add {{ vlan_vip }}/32 dev {{ vlan_interface }}; else ip addr show dev {{ vlan_interface }} | grep -q '{{ vlan_vip }}/32' && ip addr del {{ vlan_vip }}/32 dev {{ vlan_interface }} || true; fi"
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Write FRR config
+      template:
+        src: templates/frr.conf.j2
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: "0640"
+
+    - name: Enable vlan-vip service
+      systemd:
+        name: vlan-vip
+        daemon_reload: yes
+        enabled: yes
+        state: started
+
+    - name: Install keepalived (optional)
+      apt:
+        name: keepalived
+        state: present
+        update_cache: yes
+      when: enable_keepalived | bool
+
+    - name: Install keepalived health check script (optional)
+      copy:
+        dest: /usr/local/bin/check_frr.sh
+        mode: "0755"
+        content: |
+          #!/bin/bash
+          set -e
+          systemctl is-active --quiet frr
+      when: enable_keepalived | bool
+
+    - name: Write keepalived config (optional)
+      template:
+        src: templates/keepalived.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: "0644"
+      when: enable_keepalived | bool
+
+    - name: Enable keepalived service (optional)
+      systemd:
+        name: keepalived
+        daemon_reload: yes
+        enabled: yes
+        state: restarted
+      when: enable_keepalived | bool
+
+    - name: Restart FRR service
+      systemd:
+        name: frr
+        enabled: yes
+        state: restarted

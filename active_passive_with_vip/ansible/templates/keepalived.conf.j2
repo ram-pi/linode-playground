@@ -1,0 +1,28 @@
+vrrp_script chk_frr {
+  script "/usr/local/bin/check_frr.sh"
+  interval 2
+  timeout 1
+  fall 2
+  rise 1
+}
+
+vrrp_instance VI_1 {
+  state {{ 'MASTER' if node_role == 'primary' else 'BACKUP' }}
+  interface {{ vlan_interface }}
+  virtual_router_id 51
+  priority {{ 200 if node_role == 'primary' else 100 }}
+  advert_int 1
+
+  authentication {
+    auth_type PASS
+    auth_pass changeme123
+  }
+
+  virtual_ipaddress {
+    {{ vlan_vip }}/32 dev {{ vlan_interface }}
+  }
+
+  track_script {
+    chk_frr
+  }
+}

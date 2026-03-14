@@ -1,0 +1,77 @@
+@base_url = https://api.linode.com/v4
+@base_url_v4beta = https://api.linode.com/v4beta
+@region = it-mil
+@k8s_version = v1.31.9+lke7
+
+### Create LKE Cluster
+# @prompt vpc_id
+POST  {{base_url_v4beta}}/lke/clusters
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{linode_token}}
+
+{
+  "label": "demo",
+  "region": "{{region}}",
+  "k8s_version": "{{k8s_version}}",
+  "node_pools": [
+    {
+      "type": "g6-dedicated-4",
+      "count": 3,
+      "k8s_version": "{{k8s_version}}",
+      "label": "pool-1"
+    }
+  ],
+  "control_plane": {
+    "acl": {
+      "addresses": {
+        "ipv4": [
+          "0.0.0.0/0"
+        ],
+        "ipv6": [
+          "::/64"
+        ]
+      },
+      "enabled": true
+    },
+    "high_availability": true
+  },
+  "vpc_id": "{{vpc_id}}",
+  "tier": "enterprise"
+}
+
+### List LKE Clusters
+GET {{base_url_v4beta}}/lke/clusters
+Accept: application/json
+Authorization: Bearer {{linode_token}}
+
+### Delete LKE Cluster
+# @prompt cluster_id
+DELETE {{base_url_v4beta}}/lke/clusters/{{cluster_id}}
+Accept: application/json
+Authorization: Bearer {{linode_token}}
+
+### LKE-Enterprise within a VPC
+### Step 1: Create VPC
+# @name vpc_create
+POST {{base_url_v4beta}}/vpcs
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{linode_token}}
+
+{
+  "label": "demo-vpc",
+  "region": "{{region}}"
+}
+
+### Step 2: Create (dual-stack) Subnet in VPC
+# @name vpc_subnet_create
+POST {{base_url_v4beta}}/vpcs/{{vpc_create.response.body.id}}/subnets
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{linode_token}}
+
+{
+  "ipv4": "10.11.101.0/24",
+  "label": "demo-vpc-subnet"
+}
