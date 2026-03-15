@@ -28,6 +28,39 @@ cd <project-name>
 ## Projects
 
 <details>
+<summary><b>⚡ <a href="active_passive_with_vip/">Active/Passive VIP with FRR/BGP</a></b> - <code>active_passive_with_vip/</code></summary>
+
+Active/passive high-availability setup using FRR and BGP to manage a shared VLAN VIP across two nodes. A third test VM on the same VLAN validates reachability and failover behavior.
+
+**Demonstrates:**
+- FRR/BGP-based VIP failover on VLAN (alternative to lelastic)
+- Active/passive role assignment with BGP route advertisement/withdrawal
+- VLAN VIP (`172.16.1.100/32`) for private-path gateway use cases
+- VPC + VLAN dual-stack interfaces with 1:1 NAT
+- Ansible-based FRR configuration
+- Optional keepalived health-check integration
+- Scripted failover validation
+
+**Additional tools required:** `ansible-playbook`
+
+</details>
+
+<details>
+<summary><b>🌉 <a href="dual_stack_vlan_vpc/">Dual Stack VLAN + Dual VPC NAT Gateway</a></b> - <code>dual_stack_vlan_vpc/</code></summary>
+
+Three-host demo connecting two isolated VPCs through a shared VLAN, using one host as a NAT gateway. Shows cross-VPC reachability constraints and MASQUERADE-based forwarding on Linode.
+
+**Demonstrates:**
+- Dual VPC topology (`vpc1`: `10.10.100.0/24`, `vpc2`: `10.10.101.0/24`) with a shared VLAN (`172.16.1.0/24`)
+- host-2 as a NAT gateway bridging VPC1 and VPC2 via VLAN
+- iptables MASQUERADE + ip forwarding for cross-subnet routing
+- Linode VPC destination IP filtering behavior (hypervisor-level SDN drop)
+- Cloud-init hostname configuration
+- Idempotent NAT/route setup commands via Terraform outputs
+
+</details>
+
+<details>
 <summary><b>🔧 <a href="basic/">Basic Multi-Network VM</a></b> - <code>basic/</code></summary>
 
 Basic VM setup demonstrating all three Linode networking types in a single instance. Shows how to configure VPC, VLAN, and Private IP simultaneously for different connectivity patterns.

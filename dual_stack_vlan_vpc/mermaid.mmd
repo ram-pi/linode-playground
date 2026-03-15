@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph VPC1["VPC1 10.10.100.0/24"]
+      H1VPC["host-1\n10.10.100.2"]
+    end
+
+    subgraph VLAN1["VLAN1 172.16.1.0/24"]
+      H1VLAN["host-1\n172.16.1.2"]
+      H2VLAN["host-2\n172.16.1.4"]
+    end
+
+    subgraph VPC2["VPC2 10.10.101.0/24"]
+      H2VPC["host-2\n10.10.101.2"]
+      H3VPC["host-3\n10.10.101.3"]
+    end
+
+    H1VPC --- H1VLAN
+    H2VPC --- H2VLAN
+    H1VLAN <-->|"Forward via host-2"| H2VLAN
+    H2VPC <-->|"NAT/Route"| H3VPC
+
+---
+sequenceDiagram
+    participant H1 as host-1 (10.10.100.2)
+    participant H2 as host-2 NAT GW\n172.16.1.4 / 10.10.101.2
+    participant H3 as host-3 (10.10.101.3)
+
+    H1->>H2: Packet to 10.10.101.3 via VLAN route
+    H2->>H2: SNAT/MASQUERADE on egress to VPC2
+    H2->>H3: Forwarded packet in VPC2
+    H3-->>H2: Reply to translated source
+    H2-->>H1: De-NAT and return via VLAN

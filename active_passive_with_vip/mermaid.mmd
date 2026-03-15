@@ -1,0 +1,44 @@
+flowchart LR
+    subgraph VPC["VPC 10.10.100.0/24"]
+      H1VPC["host_01\n10.10.100.11"]
+      H2VPC["host_02\n10.10.100.12"]
+    end
+
+    subgraph VLAN["VLAN 172.16.1.0/24"]
+      H1VLAN["host_01\n172.16.1.11"]
+      H2VLAN["host_02\n172.16.1.12"]
+      H3VLAN["host_03\n172.16.1.13\n(test client)"]
+      VIP["VIP\n172.16.1.100/32"]
+    end
+
+    H1VPC --- H1VLAN
+    H2VPC --- H2VLAN
+    H1VLAN <-->|"BGP session"| H2VLAN
+    H1VLAN -->|"owns VIP (primary)"| VIP
+    H2VLAN -.->|"standby (secondary)"| VIP
+    H3VLAN -->|"traffic to VIP"| VIP
+
+---
+sequenceDiagram
+    participant H3 as host_03 (test client)
+    participant VIP as VLAN VIP 172.16.1.100
+    participant H1 as host_01 (primary)
+    participant H2 as host_02 (secondary)
+
+    Note over H1,H2: Normal operation — host_01 owns VIP
+    H3->>VIP: ping 172.16.1.100
+    VIP->>H1: delivered to primary
+    H1-->>H3: reply
+
+    Note over H1,H2: Failover — FRR stopped on host_01
+    H1->>H2: BGP session lost
+    H2->>VIP: withdraws standby, advertises route
+    H2->>VIP: takes VIP ownership
+    H3->>VIP: ping 172.16.1.100
+    VIP->>H2: delivered to new primary
+    H2-->>H3: reply
+
+    Note over H1,H2: Recovery — FRR restarted on host_01
+    H1->>H2: BGP session re-established
+    H1->>VIP: re-advertises as primary
+    H2->>VIP: demotes to standby

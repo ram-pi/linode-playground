@@ -15,24 +15,7 @@ This is a more advanced alternative to `lelastic`, aligned with Akamai/Linode FR
 
 ## Topology
 
-Diagram source: `mermaid.mmd`
-
-- `host_01`:
-  - Public interface (management only)
-  - VPC IP: `10.10.100.11` + NAT 1:1
-  - VLAN IP: `172.16.1.11/24`
-  - BGP role: `primary`
-- `host_02`:
-  - Public interface
-  - VPC IP: `10.10.100.12` + NAT 1:1
-  - VLAN IP: `172.16.1.12/24`
-  - BGP role: `secondary`
-- Shared VLAN VIP:
-  - `172.16.1.100/32`
-- `host_03` (test client):
-  - Public interface (management only)
-  - VLAN IP: `172.16.1.13/24`
-  - Purpose: send traffic to VLAN VIP for testing
+![diagram](excalidraw.svg)
 
 ## Files
 
@@ -96,12 +79,6 @@ Typical validation flow:
 
 This example is a PoC. For production, implement the sections below.
 
-### Where to run validation
-
-- Run `./scripts/validate-failover.sh` from your laptop in this folder.
-- Use `host_03` as a synthetic client to test traffic to the VLAN VIP.
-- Keep orchestration local so OpenTofu outputs and SSH access stay in one place.
-
 ### Service-aware failover
 
 Service-aware failover means route and VIP decisions are driven by application health, not only by host or BGP daemon state.
@@ -118,12 +95,6 @@ Recommended health signals:
 - Local dependency checks (DB port, cache, upstream API, disk space).
 - FRR/BGP session state and route installation state.
 - Host health (CPU saturation, memory pressure, interface errors).
-
-Action policy:
-
-- If app is unhealthy but host is alive, withdraw route advertisement and remove VIP ownership.
-- If app is healthy and BGP is stable, advertise route and own VIP.
-- If only one signal is degraded, do not flap immediately; require sustained failure before demotion.
 
 ### Make failover more dynamic
 
@@ -196,9 +167,7 @@ Minimum alerts:
 
 ### Security and resilience hardening
 
-- Harden host access (MFA, bastion, restricted ingress).
 - Create backup/restore and DR runbooks.
-- Use multi-AZ or multi-region architecture for real disaster recovery.
 
 ## References
 
