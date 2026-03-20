@@ -20,6 +20,66 @@ Or run individual cleanup scripts:
 ./cleanup_volumes.sh
 ```
 
+## Add Scripts to PATH
+
+If you want to run these scripts from any directory, add the `utils` folder to your shell `PATH`.
+
+### Temporary for Current Shell Session
+
+From the repository root:
+
+```bash
+export PATH="$PWD/utils:$PATH"
+```
+
+Or with the absolute path:
+
+```bash
+export PATH="<REPO_ROOT>/utils:$PATH"
+```
+
+This only lasts until you close the terminal.
+
+### Permanent on macOS or Linux
+
+If you use `zsh`:
+
+```bash
+echo 'export PATH="<REPO_ROOT>/utils:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+If you use `bash`:
+
+```bash
+echo 'export PATH="<REPO_ROOT>/utils:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+On macOS with login shells, you may prefer `~/.zprofile` instead of `~/.zshrc`:
+
+```bash
+echo 'export PATH="<REPO_ROOT>/utils:$PATH"' >> ~/.zprofile
+source ~/.zprofile
+```
+
+### Verify
+
+Confirm the scripts are executable and discoverable:
+
+```bash
+chmod +x <REPO_ROOT>/utils/cleanup*.sh
+command -v cleanup.sh
+command -v cleanup_firewalls.sh
+```
+
+Then you can run them from anywhere:
+
+```bash
+cleanup.sh
+cleanup_volumes.sh
+```
+
 ## Prerequisites
 
 - **linode-cli** - Linode CLI tool ([installation guide](https://www.linode.com/docs/products/tools/cli/get-started/))

@@ -103,6 +103,23 @@ Secure network architecture with a private VM isolated from the internet, access
 </details>
 
 <details>
+<summary><b>🛡️ <a href="nat_gw_using_wireguard/">NAT Gateway with WireGuard + Forward Proxy Bootstrap</a></b> - <code>nat_gw_using_wireguard/</code></summary>
+
+Two-VM VPC design where one public-reachable VM (via 1:1 NAT) provides both forward proxy bootstrap access and WireGuard-based NAT egress for a private-only VM.
+
+**Demonstrates:**
+- Single-interface VPC model for both VMs
+- Public VM with `nat_1_1` acting as shared egress gateway
+- Forward proxy bootstrap for `apt`/`curl` from private VM
+- WireGuard server on gateway + WireGuard client on private VM
+- Transition from proxy bootstrap to tunnel-based NAT egress
+- End-to-end verification script for proxy + WireGuard + egress checks
+
+**Additional tools required:** OpenTofu, SSH client
+
+</details>
+
+<details>
 <summary><b>🌐 <a href="static_website/">Static Website with Object Storage</a></b> - <code>static_website/</code></summary>
 
 Deploy a static website using Linode Object Storage with automatic backup synchronization. Demonstrates cloud storage for web hosting with built-in redundancy.
