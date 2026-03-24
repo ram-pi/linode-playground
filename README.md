@@ -28,17 +28,17 @@ cd <project-name>
 ## Projects
 
 <details>
-<summary><b>⚡ <a href="active_passive_with_vip/">Active/Passive VIP with FRR/BGP</a></b> - <code>active_passive_with_vip/</code></summary>
+<summary><b>⚡ <a href="active_passive_with_vip/">Active/Passive VLAN VIP with Keepalived VRRP</a></b> - <code>active_passive_with_vip/</code></summary>
 
-Active/passive high-availability setup using FRR and BGP to manage a shared VLAN VIP across two nodes. A third test VM on the same VLAN validates reachability and failover behavior.
+Active/passive high-availability setup using Keepalived VRRP to manage a shared VLAN VIP across two nodes. A third test VM on the same VLAN validates reachability and failover behavior.
 
 **Demonstrates:**
-- FRR/BGP-based VIP failover on VLAN (alternative to lelastic)
-- Active/passive role assignment with BGP route advertisement/withdrawal
+- Keepalived VRRP-based VIP failover on VLAN
+- Active/passive role assignment via VRRP priority and VIP ownership transitions
 - VLAN VIP (`172.16.1.100/32`) for private-path gateway use cases
 - VPC + VLAN dual-stack interfaces with 1:1 NAT
-- Ansible-based FRR configuration
-- Optional keepalived health-check integration
+- Ansible-based Keepalived configuration
+- Optional application health-check via `HEALTHCHECK_URL` in `./configure-hosts.sh`
 - Scripted failover validation
 
 **Additional tools required:** `ansible-playbook`
