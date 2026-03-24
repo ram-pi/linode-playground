@@ -8,29 +8,40 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: curl
+  name: pg-client
   namespace: private
   labels:
-    app: curl
+    app: pg-client
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: curl
+      app: pg-client
   template:
     metadata:
       labels:
-        app: curl
+        app: pg-client
     spec:
       containers:
-        - name: curl
-          image: curlimages/curl:latest
-          command: ["sleep"]
-          args: ["3600"]
+        - name: pg-client
+          image: postgres:16
+          command: ["/bin/sh", "-c"]
+          args:
+            - sleep infinity
+          readinessProbe:
+            exec:
+              command:
+                [
+                  "/bin/sh",
+                  "-c",
+                  "psql --version >/dev/null 2>&1 && openssl version >/dev/null 2>&1",
+                ]
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             requests:
-              cpu: 50m
-              memory: 32Mi
-            limits:
               cpu: 100m
               memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

@@ -132,6 +132,8 @@ tmp
 shared_ip_failover/ansible/inventory.yml
 shared_ip_failover/01-netcfg-*.yaml
 shared_ip_failover/lelastic*.service
+
+# miscellaneous
 outfile.jira
 template
 secrets_management/cluster-keys.json
@@ -145,3 +147,4 @@ genai-perf/monitoring/prometheus.yml
 **use-cases
 active_passive_with_vip/ansible/inventory.yml
 active_passive_with_vip/ansible.logrotate.conf
+multi_cluster_discovery/certs/postgresql-ca.crt

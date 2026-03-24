@@ -12,7 +12,7 @@ resource "random_string" "suffix" {
 
 locals {
   region        = "it-mil" # "gb-lon" # "fr-par" # "de-fra-2" # "it-mil"
-  instance_type = "g6-nanode-1"
+  instance_type = "g6-standard-2"
   image         = "linode/ubuntu24.04"
   tags          = ["prametta", "dev"]
   lke_version   = "1.34"
