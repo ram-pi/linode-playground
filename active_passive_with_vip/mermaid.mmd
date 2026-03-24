@@ -13,7 +13,7 @@ flowchart LR
 
     H1VPC --- H1VLAN
     H2VPC --- H2VLAN
-    H1VLAN <-->|"BGP session"| H2VLAN
+    H1VLAN <-->|"VRRP heartbeats"| H2VLAN
     H1VLAN -->|"owns VIP (primary)"| VIP
     H2VLAN -.->|"standby (secondary)"| VIP
     H3VLAN -->|"traffic to VIP"| VIP
@@ -30,15 +30,14 @@ sequenceDiagram
     VIP->>H1: delivered to primary
     H1-->>H3: reply
 
-    Note over H1,H2: Failover — FRR stopped on host_01
-    H1->>H2: BGP session lost
-    H2->>VIP: withdraws standby, advertises route
+    Note over H1,H2: Failover — Keepalived stopped on host_01
+    H1->>H2: VRRP heartbeat lost
     H2->>VIP: takes VIP ownership
     H3->>VIP: ping 172.16.1.100
     VIP->>H2: delivered to new primary
     H2-->>H3: reply
 
-    Note over H1,H2: Recovery — FRR restarted on host_01
-    H1->>H2: BGP session re-established
-    H1->>VIP: re-advertises as primary
+    Note over H1,H2: Recovery — Keepalived restarted on host_01
+    H1->>H2: VRRP heartbeats restored
+    H1->>VIP: resumes VIP ownership
     H2->>VIP: demotes to standby

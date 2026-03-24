@@ -36,15 +36,6 @@ locals {
 
   shared_vip = "172.16.1.100"
 
-  dc_id_map = {
-    "it-mil"   = 27
-    "de-fra-2" = 47
-    "fr-par"   = 19
-    "gb-lon"   = 44
-  }
-
-  dc_id = local.dc_id_map[local.region]
-
   is_windows = length(regexall("^[a-zA-Z]:", abspath(path.root))) > 0
   temp_path  = local.is_windows ? "$env:TEMP" : "/tmp"
 }

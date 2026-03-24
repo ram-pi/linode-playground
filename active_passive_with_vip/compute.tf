@@ -20,6 +20,11 @@ resource "random_password" "root_password" {
   special = true
 }
 
+resource "random_password" "keepalived_auth_pass" {
+  length  = 8
+  special = false
+}
+
 resource "linode_instance" "host_01" {
   label       = "ap-vip-host-01"
   region      = local.region

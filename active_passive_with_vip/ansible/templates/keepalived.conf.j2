@@ -1,5 +1,10 @@
-vrrp_script chk_frr {
-  script "/usr/local/bin/check_frr.sh"
+global_defs {
+  enable_script_security
+  script_user root
+}
+
+vrrp_script chk_service {
+  script "/usr/local/bin/check_vip_health.sh"
   interval 2
   timeout 1
   fall 2
@@ -9,20 +14,30 @@ vrrp_script chk_frr {
 vrrp_instance VI_1 {
   state {{ 'MASTER' if node_role == 'primary' else 'BACKUP' }}
   interface {{ vlan_interface }}
-  virtual_router_id 51
-  priority {{ 200 if node_role == 'primary' else 100 }}
-  advert_int 1
+  virtual_router_id {{ vrrp_router_id }}
+  priority {{ vrrp_priority }}
+  advert_int {{ vrrp_advert_int }}
+
+  unicast_src_ip {{ vlan_ip }}
+  unicast_peer {
+    {{ peer_vlan_ip }}
+  }
 
   authentication {
     auth_type PASS
-    auth_pass changeme123
+    auth_pass {{ keepalived_auth_pass }}
   }
 
   virtual_ipaddress {
-    {{ vlan_vip }}/32 dev {{ vlan_interface }}
+    {{ vlan_vip }}/32 dev {{ vlan_interface }} label {{ vlan_interface }}:vip
   }
 
+  garp_master_delay 1
+  garp_master_repeat 5
+  garp_master_refresh 30
+  garp_master_refresh_repeat 2
+
   track_script {
-    chk_frr
+    chk_service
   }
 }

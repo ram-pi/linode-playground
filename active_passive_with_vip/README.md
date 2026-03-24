@@ -1,4 +1,4 @@
-# Active/Passive Dual-Stack (VPC + VLAN) VIP with FRR/BGP
+# Active/Passive Dual-Stack (VPC + VLAN) VIP with Keepalived VRRP
 
 ## Overview
 
@@ -7,24 +7,23 @@ This demo creates three Linode VMs:
 - VLAN interface on each node in `172.16.1.0/24`
 - VPC interface on each node in `10.10.100.0/24` with 1:1 NAT
 - No public IP sharing: failover is centered on the VLAN VIP only
-- FRR with BGP signaling between both nodes over VLAN
+- Keepalived VRRP between both nodes over VLAN
 - VLAN VIP (`172.16.1.100/32`) for private-path gateway use cases
 - A third test VM on VLAN to validate VIP reachability and failover behavior
 
-This is a more advanced alternative to `lelastic`, aligned with Akamai/Linode FRR failover guidance.
+This design is intentionally VLAN-local. It does not rely on FRR/BGP for VIP ownership.
 
 ## Topology
 
-![diagram](excalidraw.svg)
+See `mermaid.mmd` for the current Keepalived VRRP topology and failover sequence.
 
 ## Files
 
 - `start.sh`: Deploy infrastructure with OpenTofu
-- `configure-hosts.sh`: Configure FRR/BGP via Ansible
+- `configure-hosts.sh`: Configure Keepalived via Ansible
 - `shutdown.sh`: Destroy resources and clean local artifacts
-- `ansible/playbook.yml`: Installs and configures FRR
-- `ansible/templates/frr.conf.j2`: FRR BGP template
-- `ansible/templates/keepalived.conf.j2`: optional keepalived health-check config
+- `ansible/playbook.yml`: Installs and configures Keepalived
+- `ansible/templates/keepalived.conf.j2`: Keepalived VRRP template
 - `scripts/validate-failover.sh`: automated validation flow
 
 ## Prerequisites
@@ -42,10 +41,10 @@ Run in this order:
 ./configure-hosts.sh
 ```
 
-Optional keepalived integration:
+Optional service-aware health check:
 
 ```bash
-ENABLE_KEEPALIVED=true ./configure-hosts.sh
+HEALTHCHECK_URL=http://127.0.0.1:8080/healthz ./configure-hosts.sh
 ```
 
 ## Validate Failover
@@ -64,10 +63,11 @@ Run scripted validation:
 
 Typical validation flow:
 
-1. Confirm BGP route on both nodes with `vtysh`.
-2. Stop FRR on `host_01`.
-3. Validate continued reachability and route preference shift to `host_02`.
-4. Start FRR again on `host_01`.
+1. Confirm Keepalived is active on both nodes.
+2. Confirm `host_01` owns the VIP.
+3. Stop Keepalived on `host_01`.
+4. Validate VIP moves to `host_02` and remains reachable.
+5. Start Keepalived again on `host_01`.
 
 ## Teardown
 
@@ -81,20 +81,9 @@ This example is a PoC. For production, implement the sections below.
 
 ### Service-aware failover
 
-Service-aware failover means route and VIP decisions are driven by application health, not only by host or BGP daemon state.
+Keepalived tracks a local health script. By default it validates the VLAN interface and local VLAN IP.
 
-Control loop:
-
-1. Observe: collect health signals from app, host, and network.
-2. Decide: evaluate policy (for example quorum and hold-down).
-3. Act: add or remove VIP ownership and advertise or withdraw routes.
-
-Recommended health signals:
-
-- Application endpoint check (for example `/healthz` with timeout and expected response).
-- Local dependency checks (DB port, cache, upstream API, disk space).
-- FRR/BGP session state and route installation state.
-- Host health (CPU saturation, memory pressure, interface errors).
+To make failover service-aware, set `healthcheck_url` in the Ansible playbook variables or inventory to a local endpoint such as `http://127.0.0.1:8080/healthz`.
 
 ### Make failover more dynamic
 
@@ -113,33 +102,21 @@ Practical example policy:
 2. Promote only after 12 consecutive successful checks over 60s.
 3. Block failback for 180s after a demotion event.
 
-### BFD and tighter convergence tuning
+### Convergence tuning
 
-Default BGP timers can make failover slower than required. BFD improves neighbor failure detection speed.
+The default VRRP interval is 1 second with script checks every 2 seconds.
 
-What changes with BFD:
+Tune these in `ansible/playbook.yml` and `ansible/templates/keepalived.conf.j2`:
 
-- Faster detection of peer/path failure.
-- Faster route withdrawal and reconvergence.
-- Better control of failover SLOs.
-
-Tradeoff:
-
-- Aggressive timers improve speed but can increase false positives during jitter or packet loss.
-
-Safe rollout sequence:
-
-1. Baseline current convergence with repeated failover tests.
-2. Enable BFD conservatively and validate stability.
-3. Tighten timers gradually while tracking flap rate.
-4. Keep rollback values documented and easy to apply.
+- `vrrp_advert_int`
+- `fall`/`rise` in `vrrp_script`
+- `vrrp_priority_primary` and `vrrp_priority_secondary`
 
 ### Monitoring and alerting blueprint
 
 Collect at least these signal groups:
 
 - Reachability: probe VIP from `host_03` and an external vantage point.
-- Routing health: BGP session up/down, route presence, route preference changes.
 - Ownership state: which node currently owns `172.16.1.100`.
 - Service state: endpoint latency, error rate, success ratio.
 - Host state: CPU, memory, disk, interface packet drops/errors.
@@ -149,19 +126,19 @@ Suggested stack:
 - Prometheus + Alertmanager + Grafana.
 - Node Exporter on hosts for system metrics.
 - Blackbox probes for VIP endpoint checks.
-- FRR metrics via exporter or scripted `vtysh` JSON collection.
+- Keepalived state collection via journal scraping or scripted `ip`/`systemctl` probes.
 
 Minimum dashboards:
 
 1. VIP reachability and latency over time.
-2. BGP sessions and route state timeline.
+2. Keepalived state timeline.
 3. VIP ownership transitions and failover events.
 4. App health and dependency checks on both nodes.
 
 Minimum alerts:
 
 1. Critical: VIP unreachable from all probes.
-2. Critical: both BGP sessions down.
+2. Critical: keepalived inactive on both failover nodes.
 3. Warning: unexpected ownership oscillation (flapping).
 4. Warning: elevated app latency or error rate on active node.
 
@@ -171,5 +148,4 @@ Minimum alerts:
 
 ## References
 
-- https://techdocs.akamai.com/cloud-computing/docs/configuring-ip-failover-over-bgp-using-frr-advanced
 - https://techdocs.akamai.com/cloud-computing/docs/configure-failover-on-a-compute-instance

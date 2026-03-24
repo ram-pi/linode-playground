@@ -1,17 +1,11 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 echo "========================================="
-echo "Configuring FRR/BGP on Active-Passive Nodes"
+echo "Configuring Keepalived on Active-Passive Nodes"
 echo "========================================="
 echo ""
-
-if ! command -v lin >/dev/null 2>&1; then
-    echo "Error: lin CLI is required for IP sharing."
-    echo "Install with: pipx install linode-cli"
-    exit 1
-fi
 
 if ! command -v ansible-playbook >/dev/null 2>&1; then
     echo "Error: ansible-playbook not found."
@@ -19,10 +13,9 @@ if ! command -v ansible-playbook >/dev/null 2>&1; then
     exit 1
 fi
 
-ENABLE_KEEPALIVED="${ENABLE_KEEPALIVED:-false}"
-
 HOST_01_IP=$(tofu output -raw host_01_public_ip)
 HOST_02_IP=$(tofu output -raw host_02_public_ip)
+HEALTHCHECK_URL="${HEALTHCHECK_URL:-}"
 
 wait_for_ssh() {
     local ip="$1"
@@ -54,17 +47,25 @@ echo ""
 echo "Generating Ansible inventory..."
 tofu output -raw ansible_inventory > ansible/inventory.yml
 
-echo "Running Ansible FRR playbook..."
-cd ansible
+EXTRA_VARS=()
+if [ -n "${HEALTHCHECK_URL}" ]; then
+    echo "Using optional healthcheck_url: ${HEALTHCHECK_URL}"
+    EXTRA_VARS+=(--extra-vars "healthcheck_url=${HEALTHCHECK_URL}")
+fi
+
+echo "Running Ansible Keepalived playbook..."
+PLAYBOOK_CMD=(ansible-playbook -i ansible/inventory.yml ansible/playbook.yml)
+if [ ${#EXTRA_VARS[@]} -gt 0 ]; then
+    PLAYBOOK_CMD+=("${EXTRA_VARS[@]}")
+fi
 ANSIBLE_CONFIG=./ansible.cfg \
 ANSIBLE_STDOUT_CALLBACK=default \
 ANSIBLE_CALLBACK_RESULT_FORMAT=yaml \
-ansible-playbook -i inventory.yml playbook.yml --extra-vars "dc_id=$(tofu output -raw bgp_dc_id) enable_keepalived=${ENABLE_KEEPALIVED}"
-cd ..
+"${PLAYBOOK_CMD[@]}"
 
 echo ""
 echo "========================================="
-echo "FRR/BGP configuration complete"
+echo "Keepalived configuration complete"
 echo "========================================="
 echo ""
 echo "Validation commands:"
