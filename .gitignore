@@ -121,6 +121,13 @@ gpu_inference/monitoring/prometheus.yml
 # experiments
 tmp
 
+# generated TLS certificates
+**/certs/tls.crt
+**/certs/tls.key
+
+# generated from templates by start.sh
+**/k8s/nginx-mirror-vpc.yaml
+
 # shared_ip_failover generated files
 shared_ip_failover/ansible/inventory.yml
 shared_ip_failover/01-netcfg-*.yaml
@@ -134,3 +141,7 @@ multi_cluster_discovery/kubeconfig-cluster-01
 multi_cluster_discovery/kubeconfig-cluster-02
 genai-perf/monitoring/prometheus.yml
 **/ansible.cfg
+**INSTRUCTIONS.md
+**use-cases
+active_passive_with_vip/ansible/inventory.yml
+active_passive_with_vip/ansible.logrotate.conf
