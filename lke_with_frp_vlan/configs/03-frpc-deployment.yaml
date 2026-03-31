@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frpc
+  namespace: frp
+  labels:
+    app: frpc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frpc
+  template:
+    metadata:
+      labels:
+        app: frpc
+    spec:
+      # hostNetwork is required so the pod uses the node's VLAN interface
+      # to reach frps at FRP_SERVER_ADDR over the VLAN (e.g. 172.20.200.0/24).
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: frpc
+          image: snowdreamtech/frpc:latest
+          # This image's entrypoint expects an executable command.
+          # Without this, args starting with "-c" fail as: "su-exec: -c: No such file or directory".
+          command: ["frpc"]
+          args: ["-c", "/etc/frp/frpc.toml"]
+          volumeMounts:
+            - name: frpc-config
+              mountPath: /etc/frp
+              readOnly: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+      volumes:
+        - name: frpc-config
+          configMap:
+            name: frpc-config

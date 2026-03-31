@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dummy-nginx
+  namespace: frp
+  labels:
+    app: dummy-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dummy-nginx
+  template:
+    metadata:
+      labels:
+        app: dummy-nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:stable-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dummy-nginx
+  namespace: frp
+spec:
+  selector:
+    app: dummy-nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: ClusterIP
