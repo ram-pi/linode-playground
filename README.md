@@ -201,6 +201,25 @@ LKE Enterprise cluster with App Platform for Linode (APL), featuring AI/ML capab
 </details>
 
 <details>
+<summary><b>🔁 <a href="lke_with_frp_vlan/">LKE with VLAN + FRP Tunnel</a></b> - <code>lke_with_frp_vlan/</code></summary>
+
+Expose an internal Kubernetes service through an FRP tunnel carried over a private VLAN between an LKE cluster and a dedicated `frps` VM. This shows how to keep FRP control traffic off the public internet while still publishing a selected service on the FRP server.
+
+**Demonstrates:**
+- LKE cluster with HA control plane and ACL-restricted API access
+- Private VLAN attached to both the `frps` VM and all LKE worker nodes
+- `lke-vlan-controller` for adding VLAN interfaces to LKE nodes
+- FRP server (`frps`) on a Linode VM and FRP client (`frpc`) in Kubernetes
+- `hostNetwork: true` for `frpc` so it can reach the node VLAN interface directly
+- TCP proxying of an internal `dummy-nginx` ClusterIP service to remote port `8080`
+- Cloud Firewall rules for FRP bind, remote, admin UI, and SSH access
+- Manual verification flow plus optional `hey` load testing of the exposed endpoint
+
+**Additional tools required:** `kubectl`, `helm`, `envsubst`, `hey` (optional, for load testing)
+
+</details>
+
+<details>
 <summary><b>🌐 <a href="proxy_chaining/">Proxy Chaining with Envoy Gateway</a></b> - <code>proxy_chaining/</code></summary>
 
 Production-ready demonstration of advanced gateway routing patterns using Envoy Gateway and Kubernetes Gateway API. Shows multi-backend routing with in-cluster services and external Object Storage, automated DNS management, and TLS certificate provisioning.
