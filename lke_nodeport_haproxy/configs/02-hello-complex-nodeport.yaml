@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-complex
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-complex-deploy
+  namespace: hello-complex
+spec:
+  replicas: 100
+  selector:
+    matchLabels:
+      app: hello-complex-server
+  template:
+    metadata:
+      labels:
+        app: hello-complex-server
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: hello-complex-server
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: hello-complex-server
+      containers:
+        - name: hello-complex-server
+          image: nicholasjackson/fake-service:v0.26.2
+          ports:
+            - containerPort: 9090
+          env:
+            - name: NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: LISTEN_ADDR
+              value: "0.0.0.0:9090"
+            - name: TIMING_50_PERCENTILE
+              value: "20ms"
+            - name: TIMING_90_PERCENTILE
+              value: "60ms"
+            - name: TIMING_99_PERCENTILE
+              value: "220ms"
+            - name: ERROR_RATE
+              value: "0.01"
+            - name: ERROR_TYPE
+              value: "http_error"
+          readinessProbe:
+            tcpSocket:
+              port: 9090
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "256Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2024Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-complex-nodeport
+  namespace: hello-complex
+spec:
+  type: NodePort
+  externalTrafficPolicy: Cluster
+  selector:
+    app: hello-complex-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 9090
+      nodePort: 32080

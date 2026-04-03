@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-deploy
+  namespace: hello
+spec:
+  replicas: 50
+  selector:
+    matchLabels:
+      app: hello-server
+  template:
+    metadata:
+      labels:
+        app: hello-server
+    spec:
+      containers:
+        - name: hello-server
+          # lightweight Go-based whoami that echoes request headers (high-performance)
+          image: traefik/whoami:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "2000m"
+              memory: "1024Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-nodeport
+  namespace: hello
+spec:
+  type: NodePort
+  # we rely on X-Forwarded-For from HAProxy for client identity; Cluster mode allows kube-proxy balancing
+  externalTrafficPolicy: Cluster
+  selector:
+    app: hello-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 32080

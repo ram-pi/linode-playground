@@ -165,6 +165,25 @@ docker run --rm -p 9100:9100 -d  -e LINODE_TOKEN=MY_TOKEN  ghcr.io/ram-pi/linode
 </details>
 
 <details>
+<summary><b>🔁 <a href="lke_nodeport_haproxy/">LKE NodePort + HAProxy Performance</a></b> - <code>lke_nodeport_haproxy/</code></summary>
+
+Lightweight demo that uses a single HAProxy proxy VM in front of an LKE cluster exposing an HTTP service via a Kubernetes `NodePort`. Focuses on real-world performance testing, safe NodePort topology choices, and practical HAProxy tuning for high connection/RPS loads.
+
+**Demonstrates:**
+- HAProxy proxy VM targeting Kubernetes NodePort backends and generating an HAProxy config from node External IPs
+- `externalTrafficPolicy: Cluster` vs `Local` tradeoffs and safe migration steps
+- Health-check alignment to avoid false DOWN states and `http-reuse`/`forwardfor` configuration
+- HAProxy runtime tuning (`nbthread`, `maxconn`, `tune.maxaccept`) and OS sysctl/file-descriptor tuning for large connection counts
+- Load testing with `wrk`, client scaling patterns (multi-client aggregation), and Little's Law interpretation
+- Quick observability using HAProxy stats socket, `hatop`, and basic kube metrics guidance
+
+**Additional tools required:** `kubectl`, `wrk`, `hatop`, `jq`, `tofu` (or similar for IaC outputs)
+
+Usage and runbook live in the project folder; see `lke_nodeport_haproxy/MANUAL_DEPLOYMENT.md` for step-by-step instructions and tuning notes.
+
+</details>
+
+<details>
 <summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.
