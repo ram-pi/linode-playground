@@ -119,27 +119,21 @@ Allow the HAProxy VM to reach all K8s nodes on the NodePort (32080).
 export PROXY_IP=$(tofu output -raw proxy_public_ip | tr -d '\r')
 
 # Create a patch to add the allow-haproxy rule to the primary firewall
-cat > /tmp/firewall-patch.json <<EOF
-[
-  {
-    "op": "add",
-    "path": "/spec/ruleset/inbound/-",
-    "value": {
-      "action": "ACCEPT",
-      "addresses": {
-        "ipv4": ["${PROXY_IP}/32"]
-      },
-      "description": "Allow HAProxy to K8s NodePort",
-      "label": "allow-haproxy-nodeport",
-      "ports": "32080",
-      "protocol": "TCP"
-    }
-  }
-]
+cat > /tmp/firewall-patch.yaml <<EOF
+spec:
+  ruleset:
+    inbound:
+      - action: ACCEPT
+        addresses:
+          ipv4: ["${PROXY_IP}/32"]
+        description: "Allow HAProxy to K8s NodePort"
+        label: "allow-haproxy-nodeport"
+        ports: "32080"
+        protocol: "TCP"
 EOF
 
 # Apply the patch to the primary CloudFirewall
-kubectl -n kube-system patch cloudfirewalls primary --type=json --patch-file=/tmp/firewall-patch.json
+kubectl -n kube-system patch cloudfirewalls primary --type=merge --patch-file=/tmp/firewall-patch.yaml
 ```
 
 Verify the rule was added:
