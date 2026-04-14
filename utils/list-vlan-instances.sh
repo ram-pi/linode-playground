@@ -12,6 +12,8 @@ set -euo pipefail
 
 REGION_FILTER=""
 VLAN_LABEL_FILTER=""
+AS_USER=""
+AS_USER_OPTION=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -23,8 +25,13 @@ while [[ $# -gt 0 ]]; do
       VLAN_LABEL_FILTER="$2"
       shift 2
       ;;
+    --as-user)
+      AS_USER="$2"
+      AS_USER_OPTION="--as-user $AS_USER"
+      shift 2
+      ;;
     --help|-h)
-      echo "Usage: $0 [--region <region>] [--vlan <vlan-label>]"
+      echo "Usage: $0 [--region <region>] [--vlan <vlan-label>] [--as-user <username>]"
       exit 0
       ;;
     *)
@@ -49,7 +56,7 @@ echo "📋 Fetching Linode instances..."
 [[ -n "$VLAN_LABEL_FILTER" ]] && echo "   VLAN filter   : $VLAN_LABEL_FILTER"
 echo ""
 
-LINODES_JSON=$(linode-cli linodes list --json 2>/dev/null)
+LINODES_JSON=$(linode-cli linodes list ${AS_USER_OPTION} --json 2>/dev/null)
 
 if [[ -n "$REGION_FILTER" ]]; then
   LINODES_JSON=$(echo "$LINODES_JSON" | jq --arg r "$REGION_FILTER" '[.[] | select(.region == $r)]')
@@ -68,7 +75,7 @@ while IFS= read -r linode_id; do
   linode_label=$(echo "$LINODES_JSON" | jq -r --argjson id "$linode_id" '.[] | select(.id == $id) | .label')
   linode_region=$(echo "$LINODES_JSON" | jq -r --argjson id "$linode_id" '.[] | select(.id == $id) | .region')
 
-  configs_json=$(linode-cli linodes configs-list "$linode_id" --json 2>/dev/null)
+  configs_json=$(linode-cli linodes configs-list "$linode_id" ${AS_USER_OPTION} --json 2>/dev/null)
 
   # Extract all VLAN interfaces across all configs
   vlan_ifaces=$(echo "$configs_json" | jq '[
