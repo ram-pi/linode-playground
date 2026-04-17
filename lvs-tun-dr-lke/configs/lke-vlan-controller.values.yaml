@@ -1,0 +1,23 @@
+# how to use this file:
+# 1. Update the values in this file as needed.
+# 2. Install or upgrade the Helm release with this file:
+#    helm upgrade --install lke-vlan-controller oci://ghcr.io/ram-pi/lke-vlan-controller \
+#    --set linodeToken="$LINODE_TOKEN" \
+#    --namespace lke-vlan-controller --create-namespace -f lke-vlan-controller.values.yaml
+
+# -- VLAN configuration.
+vlan:
+  name: "lvs-vlan"
+  cidr: "10.0.0.0/24"
+  excludedIPs:
+    - "10.0.0.1" # LVS Director VM's VLAN IP
+
+deployment:
+  replicas: 2
+
+exclusion:
+  labelKey: "lke-vlan-exclude"
+
+reboot:
+  enabled: true
+  waitTimeoutSeconds: 600

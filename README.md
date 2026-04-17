@@ -239,6 +239,21 @@ Expose an internal Kubernetes service through an FRP tunnel carried over a priva
 </details>
 
 <details>
+<summary><b>🧭 <a href="lvs-tun-dr-lke/">LVS TUN/DR with LKE NodePort</a></b> - <code>lvs-tun-dr-lke/</code></summary>
+
+Proof-of-concept demonstrating LVS (Linux Virtual Server) in tunneling (IPIP) and direct-routing modes with a single LVS director VM and an LKE cluster exposing a service via NodePort. Includes FRR configuration, VIP sharing to LKE nodes, and manual deployment guidance for both TUN and DR modes.
+
+**Demonstrates:**
+- LVS Director in TUN (IPIP) and Direct Routing modes
+- VIP sharing to Kubernetes nodes for NodePort service exposure
+- FRR-based routing and VIP management
+- Manual steps for FRR and VIP assignment to LKE nodes
+
+**Additional tools required:** `kubectl`, `helm`, `jq`, `tofu` (for infrastructure outputs)
+
+</details>
+
+<details>
 <summary><b>🌐 <a href="proxy_chaining/">Proxy Chaining with Envoy Gateway</a></b> - <code>proxy_chaining/</code></summary>
 
 Production-ready demonstration of advanced gateway routing patterns using Envoy Gateway and Kubernetes Gateway API. Shows multi-backend routing with in-cluster services and external Object Storage, automated DNS management, and TLS certificate provisioning.
