@@ -1,0 +1,9 @@
+[project]
+name = "object-storage-signed-urls"
+version = "0.1.0"
+description = "Linode Object Storage signed URL demo API"
+requires-python = ">=3.10"
+dependencies = ["boto3==1.40.66", "botocore==1.40.66", "flask==3.1.2"]
+
+[tool.uv]
+package = false

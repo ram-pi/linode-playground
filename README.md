@@ -135,6 +135,28 @@ Deploy a static website using Linode Object Storage with automatic backup synchr
 </details>
 
 <details>
+<summary><b>🔐 <a href="object_storage_signed_urls/">Object Storage Signed URLs Demo</a></b> - <code>object_storage_signed_urls/</code></summary>
+
+Provision a Linode Object Storage bucket and scoped RW key with OpenTofu, then run a local Flask API that issues presigned upload and read URLs for S3-compatible operations.
+
+**Demonstrates:**
+- OpenTofu provisioning for bucket + scoped Object Storage key
+- Presigned `PUT` URL generation for single-part uploads
+- Presigned `GET` URL generation for downloads
+- Direct file download using the read signed URL (`curl "$READ_SIGNED_URL" --output ...`)
+- Multipart upload for large files via `boto3` with explicit SigV4 config for Linode S3 compatibility
+- Signed URL persistence in SQLite with active/all listing endpoint
+- End-to-end API validation using `curl` + `jq`
+- CORS configuration guidance for browser-side direct uploads
+- TLS termination notes (Object Storage terminates TLS at the service edge)
+
+**Workflow:** `./start.sh` provisions infra and writes `.runtime.env`; follow `MANUAL_DEPLOYMENT.md` to start the Flask API and run the full sequence.
+
+**Additional tools required:** `OpenTofu`, `python3`, `uv`, `jq`
+
+</details>
+
+<details>
 <summary><b>📊 <a href="linode_prometheus_exporter/">Linode Prometheus Exporter</a></b> - <code>linode_prometheus_exporter/</code></summary>
 
 Prometheus exporter that exposes Linode resource metrics for monitoring and alerting. Includes a complete monitoring stack with Prometheus and Grafana, featuring a pre-built dashboard for visualizing your Linode infrastructure.

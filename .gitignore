@@ -148,3 +148,10 @@ genai-perf/monitoring/prometheus.yml
 active_passive_with_vip/ansible/inventory.yml
 active_passive_with_vip/ansible.logrotate.conf
 multi_cluster_discovery/certs/postgresql-ca.crt
+
+# object_storage_signed_urls generated runtime files
+object_storage_signed_urls/.runtime.env
+object_storage_signed_urls/signed_urls.db
+object_storage_signed_urls/sample.txt
+object_storage_signed_urls/large-sample.bin
+object_storage_signed_urls/downloaded-sample.txt
