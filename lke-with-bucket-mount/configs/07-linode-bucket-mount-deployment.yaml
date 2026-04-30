@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linode-bucket-mount
+  labels:
+    app: linode-bucket-mount
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linode-bucket-mount
+  template:
+    metadata:
+      labels:
+        app: linode-bucket-mount
+    spec:
+      containers:
+        - name: app
+          image: ubuntu:22.04
+          command:
+            - /bin/bash
+            - -c
+            - |
+              apt-get update && apt-get install -y curl vim
+              echo "Linode S3 bucket mounted at /mnt/linode-bucket/"
+              while true; do sleep 3600; done
+          volumeMounts:
+            - name: linode-bucket
+              mountPath: /mnt/linode-bucket
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command:
+                - test
+                - -d
+                - /mnt/linode-bucket
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            exec:
+              command:
+                - test
+                - -d
+                - /mnt/linode-bucket
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: linode-bucket
+          persistentVolumeClaim:
+            claimName: linode-bucket-pvc

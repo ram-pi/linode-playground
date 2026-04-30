@@ -261,6 +261,25 @@ Expose an internal Kubernetes service through an FRP tunnel carried over a priva
 </details>
 
 <details>
+<summary><b>🪣 <a href="lke-with-bucket-mount/">LKE with Bucket Mount (Linode + GCS)</a></b> - <code>lke-with-bucket-mount/</code></summary>
+
+Multi-cloud storage demo on LKE that mounts a Linode Object Storage bucket with `csi-s3` and mounts a Google Cloud Storage bucket using a manual privileged `gcsfuse` pod.
+
+**Demonstrates:**
+- LKE cluster provisioning with OpenTofu
+- Linode Object Storage bucket + scoped access keys
+- `csi-s3` installation with single-bucket StorageClass configuration
+- Workload mounting Linode bucket via PVC (`linode-bucket-mount`)
+- GCS bucket + service account creation helper
+- Manual GCS mount with `gcsfuse` in Kubernetes (`gcs-bucket-manual`)
+- End-to-end object write/read verification from pods and cloud side
+- Teardown workflow that empties Linode bucket and removes GCS bucket
+
+**Additional tools required:** `kubectl`, `helm`, `gcloud`, `envsubst`
+
+</details>
+
+<details>
 <summary><b>🧭 <a href="lvs-tun-dr-lke/">LVS TUN/DR with LKE NodePort</a></b> - <code>lvs-tun-dr-lke/</code></summary>
 
 Proof-of-concept demonstrating LVS (Linux Virtual Server) in tunneling (IPIP) and direct-routing modes with a single LVS director VM and an LKE cluster exposing a service via NodePort. Includes FRR configuration, VIP sharing to LKE nodes, and manual deployment guidance for both TUN and DR modes.
