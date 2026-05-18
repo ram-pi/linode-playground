@@ -156,9 +156,6 @@ object_storage_signed_urls/sample.txt
 object_storage_signed_urls/large-sample.bin
 object_storage_signed_urls/downloaded-sample.txt
 
-# top-folder diagrams
-./diagrams
-
 .terraform/
 .tofu/
 terraform.tfstate
