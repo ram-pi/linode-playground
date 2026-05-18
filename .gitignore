@@ -155,3 +155,16 @@ object_storage_signed_urls/signed_urls.db
 object_storage_signed_urls/sample.txt
 object_storage_signed_urls/large-sample.bin
 object_storage_signed_urls/downloaded-sample.txt
+
+# top-folder diagrams
+./diagrams
+
+.terraform/
+.tofu/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
+.tofu.lock.hcl
+results/
+diagrams
+**/prd.md

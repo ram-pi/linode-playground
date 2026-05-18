@@ -1,0 +1,255 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - tar
+
+write_files:
+  - path: /usr/local/bin/install_prometheus.sh
+    owner: root:root
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      arch="$(uname -m)"
+      case "$${arch}" in
+        x86_64) arch="amd64" ;;
+        aarch64) arch="arm64" ;;
+        armv7l) arch="armv7" ;;
+        *)
+          echo "Unsupported architecture: $${arch}" >&2
+          exit 1
+          ;;
+      esac
+
+      version="${prometheus_version}"
+      base_url="https://github.com/prometheus/prometheus/releases/download/${prometheus_version_raw}"
+      tarball="prometheus-${prometheus_version}.linux-$${arch}.tar.gz"
+
+      tmp_dir="$(mktemp -d)"
+      trap 'rm -rf "$${tmp_dir}"' EXIT
+
+      curl -fsSL -o "$${tmp_dir}/$${tarball}" "$${base_url}/$${tarball}"
+      tar -xzf "$${tmp_dir}/$${tarball}" -C "$${tmp_dir}"
+
+      install -d -m 0755 /etc/prometheus /var/lib/prometheus
+      install -m 0755 "$${tmp_dir}/prometheus-${prometheus_version}.linux-$${arch}/prometheus" /usr/local/bin/prometheus
+      install -m 0755 "$${tmp_dir}/prometheus-${prometheus_version}.linux-$${arch}/promtool" /usr/local/bin/promtool
+
+      id -u prometheus >/dev/null 2>&1 || useradd --no-create-home --shell /usr/sbin/nologin prometheus
+      chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+
+  - path: /etc/systemd/system/prometheus.service
+    owner: root:root
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Prometheus
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=prometheus
+      Group=prometheus
+      Type=simple
+      ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus --web.enable-remote-write-receiver
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/prometheus/prometheus.yml
+    owner: root:root
+    permissions: "0644"
+    content: |
+      global:
+        scrape_interval: 15s
+
+      scrape_configs:
+        - job_name: prometheus
+          static_configs:
+            - targets: ["127.0.0.1:9090"]
+
+        - job_name: exporter-node
+          static_configs:
+            - targets: ["${exporter_vpc_ip}:9100"]
+
+  - path: /etc/loki/config.yaml
+    owner: root:root
+    permissions: "0644"
+    content: |
+      auth_enabled: false
+
+      server:
+        http_listen_port: 3100
+        http_listen_address: 0.0.0.0
+
+      common:
+        instance_addr: 127.0.0.1
+        path_prefix: /var/lib/loki
+        replication_factor: 1
+        ring:
+          kvstore:
+            store: inmemory
+        storage:
+          filesystem:
+            chunks_directory: /var/lib/loki/chunks
+            rules_directory: /var/lib/loki/rules
+
+      schema_config:
+        configs:
+          - from: 2024-01-01
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
+
+      limits_config:
+        allow_structured_metadata: false
+        volume_enabled: true
+
+      ruler:
+        alertmanager_url: http://localhost:9093
+
+  - path: /etc/grafana/provisioning/datasources/datasources.yaml
+    owner: root:root
+    permissions: "0644"
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          uid: prometheus
+          type: prometheus
+          access: proxy
+          url: http://127.0.0.1:9090
+          isDefault: true
+          editable: true
+
+        - name: Loki
+          uid: loki
+          type: loki
+          access: proxy
+          url: http://127.0.0.1:3100
+          editable: true
+
+  - path: /etc/grafana/provisioning/dashboards/dashboards.yaml
+    owner: root:root
+    permissions: "0644"
+    content: |
+      apiVersion: 1
+      providers:
+        - name: Demo dashboards
+          orgId: 1
+          folder: Demo
+          type: file
+          disableDeletion: false
+          editable: true
+          updateIntervalSeconds: 10
+          options:
+            path: /var/lib/grafana/dashboards
+
+  - path: /var/lib/grafana/dashboards/node-exporter-overview.json
+    owner: root:root
+    permissions: "0644"
+    content: |
+      {
+        "id": null,
+        "uid": "node-exp-overview",
+        "title": "Node Exporter Overview",
+        "tags": ["demo", "node-exporter"],
+        "timezone": "browser",
+        "schemaVersion": 39,
+        "version": 1,
+        "refresh": "15s",
+        "panels": [
+          {
+            "id": 1,
+            "type": "stat",
+            "title": "Target Up",
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "targets": [
+              {"expr": "up{job=\"node-exporter\"}", "refId": "A"}
+            ],
+            "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "type": "timeseries",
+            "title": "CPU Usage %",
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "targets": [
+              {"expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "refId": "A"}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+          },
+          {
+            "id": 3,
+            "type": "timeseries",
+            "title": "Memory Usage %",
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "targets": [
+              {"expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "refId": "A"}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+          }
+        ]
+      }
+
+  - path: /var/lib/grafana/dashboards/system-logs-overview.json
+    owner: root:root
+    permissions: "0644"
+    content: |
+      {
+        "id": null,
+        "uid": "sys-logs-overview",
+        "title": "System Logs Overview",
+        "tags": ["demo", "loki"],
+        "timezone": "browser",
+        "schemaVersion": 39,
+        "version": 1,
+        "refresh": "15s",
+        "panels": [
+          {
+            "id": 1,
+            "type": "timeseries",
+            "title": "Log Lines per Minute",
+            "datasource": {"type": "loki", "uid": "loki"},
+            "targets": [
+              {"expr": "sum by (job) (count_over_time({host=\"exporter\"}[1m]))", "refId": "A"}
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "type": "logs",
+            "title": "Exporter Logs",
+            "datasource": {"type": "loki", "uid": "loki"},
+            "targets": [
+              {"expr": "{host=\"exporter\"}", "refId": "A"}
+            ],
+            "gridPos": {"h": 12, "w": 24, "x": 0, "y": 8}
+          }
+        ]
+      }
+
+runcmd:
+  - /usr/local/bin/install_prometheus.sh
+  - mkdir -p /etc/apt/keyrings
+  - wget -q -O /etc/apt/keyrings/grafana.asc https://apt.grafana.com/gpg-full.key
+  - chmod 644 /etc/apt/keyrings/grafana.asc
+  - sh -c 'echo "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list'
+  - apt-get update
+  - apt-get install -y grafana loki
+  - mkdir -p /var/lib/grafana/dashboards
+  - systemctl daemon-reload
+  - systemctl enable --now prometheus
+  - systemctl enable --now loki
+  - systemctl enable --now grafana-server

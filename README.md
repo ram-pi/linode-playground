@@ -187,6 +187,36 @@ docker run --rm -p 9100:9100 -d  -e LINODE_TOKEN=MY_TOKEN  ghcr.io/ram-pi/linode
 </details>
 
 <details>
+<summary><b>🤖 <a href="linode_MoE/">Linode MoE vLLM Demo</a></b> - <code>linode_MoE/</code></summary>
+
+Dual-GPU vLLM MoE inference demo using a Linode `g2-gpu-rtx4000a2-m` instance. Provides an OpenTofu/Terraform blueprint, cloud-init NVIDIA driver bootstrap, vLLM launchers for Tensor Parallel (TP) and Expert Parallel (EP/MoE) modes, and benchmarking scripts for tokens/sec vs concurrency.
+
+**Demonstrates:**
+- Dual-GPU provisioning and cloud-init driver installation
+- Running vLLM with MoE routing and Tensor Parallel baselines
+- Benchmarking throughput and latency with an OpenAI-compatible load generator
+- Recovery and GPU troubleshooting (ninja build tooling, cleanup helpers)
+
+**Additional tools required:** `tofu`, `ssh`, `jq`, `python3`
+
+</details>
+
+<details>
+<summary><b>📈 <a href="linode_node_exporter/">Linode Node Exporter</a></b> - <code>linode_node_exporter/</code></summary>
+
+Lightweight Prometheus Node Exporter demo for exposing host-level metrics from Linode instances. Includes OpenTofu provisioning, cloud-init to install the exporter, example Prometheus scrape configuration, and an `alloy` example used to grab metrics and logs for collection and forwarding.
+
+**Demonstrates:**
+- Host metrics collection with Prometheus Node Exporter
+- Using `alloy` to collect metrics and logs from the instance
+- Minimal OpenTofu provisioning and cloud-init templating
+- Integration notes for scraping from a central Prometheus server
+
+**Additional tools required:** `tofu`, `prometheus` (optional for end-to-end), `alloy`
+
+</details>
+
+<details>
 <summary><b>🔁 <a href="lke_nodeport_haproxy/">LKE NodePort + HAProxy Performance</a></b> - <code>lke_nodeport_haproxy/</code></summary>
 
 Lightweight demo that uses a single HAProxy proxy VM in front of an LKE cluster exposing an HTTP service via a Kubernetes `NodePort`. Focuses on real-world performance testing, safe NodePort topology choices, and practical HAProxy tuning for high connection/RPS loads.
