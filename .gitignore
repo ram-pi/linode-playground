@@ -163,5 +163,8 @@ terraform.tfstate.backup
 .terraform.lock.hcl
 .tofu.lock.hcl
 results/
-diagrams
 **/prd.md
+
+**/.karmada
+**/kubeconfig*
+**/tfplan

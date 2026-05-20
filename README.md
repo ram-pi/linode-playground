@@ -236,6 +236,23 @@ Usage and runbook live in the project folder; see `lke_nodeport_haproxy/MANUAL_D
 </details>
 
 <details>
+<summary><b>🤖🔗 <a href="lke_distributed_inference/">LKE Distributed Inference with Karmada + KubeRay</a></b> - <code>lke_distributed_inference/</code></summary>
+
+Multi-cluster inference architecture for **Mistral-7B-v0.3** using Karmada for orchestration across three LKE clusters. Features a centralized control plane in London and two high-availability GPU-enabled worker clusters in Frankfurt.
+
+**Demonstrates:**
+- Multi-cluster management with **Karmada** on LKE Standard
+- Distributed AI inference with **KubeRay** and **Mistral-7B-v0.3**
+- Cross-region orchestration (Control Plane: `gb-lon`, Workers: `de-fra-2`)
+- Secure API Gateway with Nginx, static API keys, and IP allowlisting
+- High availability with regional NodeBalancers and Cloud Firewalls
+- Infrastructure-as-Code provisioning with OpenTofu (3-cluster topology)
+
+**Additional tools required:** `tofu`, `kubectl`, `helm`, `karmadactl`
+
+</details>
+
+<details>
 <summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.
