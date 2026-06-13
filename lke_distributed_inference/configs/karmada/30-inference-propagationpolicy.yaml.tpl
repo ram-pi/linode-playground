@@ -11,17 +11,8 @@ spec:
     - apiVersion: ray.io/v1
       kind: RayService
       name: llm-serve
-    - apiVersion: v1
-      kind: ConfigMap
-      name: llm-api-gateway-nginx
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: llm-api-gateway
-    - apiVersion: v1
-      kind: Service
-      name: llm-api-gateway
   placement:
     clusterAffinity:
       clusterNames:
-        - ${KARMADA_CLUSTER_FRA_1}
-        - ${KARMADA_CLUSTER_FRA_2}
+        - ${KARMADA_CLUSTER_FRA}
+        - ${KARMADA_CLUSTER_SEA}

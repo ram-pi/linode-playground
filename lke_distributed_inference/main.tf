@@ -7,14 +7,35 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  cluster_lon_name   = "${var.name_prefix}-lon-${random_string.suffix.result}"
-  cluster_fra_1_name = "${var.name_prefix}-fra-1-${random_string.suffix.result}"
-  cluster_fra_2_name = "${var.name_prefix}-fra-2-${random_string.suffix.result}"
+  cluster_lon_name = "${var.name_prefix}-lon-${random_string.suffix.result}"
+  cluster_fra_name = "${var.name_prefix}-fra-${random_string.suffix.result}"
+  cluster_sea_name = "${var.name_prefix}-sea-${random_string.suffix.result}"
 
   common_tags = [
     "lke",
     "kuberay",
     "karmada",
-    "distributed-inference"
+    "distributed-inference",
+    "akamai-summit"
   ]
+}
+
+moved {
+  from = linode_lke_cluster.cluster_fra_1
+  to   = linode_lke_cluster.cluster_fra
+}
+
+moved {
+  from = linode_lke_cluster.cluster_fra_2
+  to   = linode_lke_cluster.cluster_sea
+}
+
+moved {
+  from = local_file.kubeconfig_fra_1
+  to   = local_file.kubeconfig_fra
+}
+
+moved {
+  from = local_file.kubeconfig_fra_2
+  to   = local_file.kubeconfig_sea
 }

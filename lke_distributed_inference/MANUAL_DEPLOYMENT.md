@@ -3,7 +3,7 @@
 This runbook covers post-provisioning setup after `./start.sh`:
 
 1. Install Karmada on the `gb-lon` cluster as control plane.
-2. Join the two `de-fra-2` clusters as Karmada members.
+2. Join the `de-fra-2` and `us-sea` clusters as Karmada members.
 3. Install NVIDIA GPU Operator and KubeRay on both member clusters.
 4. Deploy Mistral-7B-v0.3 RayService + secure NodeBalancer gateway on both members.
 5. Validate prompt requests from an allowlisted laptop IP.
@@ -40,21 +40,21 @@ From `lke_distributed_inference/`:
 
 ```bash
 export KUBECONFIG_LON=$PWD/kubeconfig-gb-lon
-export KUBECONFIG_FRA_1=$PWD/kubeconfig-de-fra-2-1
-export KUBECONFIG_FRA_2=$PWD/kubeconfig-de-fra-2-2
+export KUBECONFIG_FRA=$PWD/kubeconfig-de-fra-2
+export KUBECONFIG_SEA=$PWD/kubeconfig-us-sea
 
 kubectl --kubeconfig "$KUBECONFIG_LON" config rename-context \
   "$(kubectl --kubeconfig "$KUBECONFIG_LON" config current-context)" lon || true
 
-kubectl --kubeconfig "$KUBECONFIG_FRA_1" config rename-context \
-  "$(kubectl --kubeconfig "$KUBECONFIG_FRA_1" config current-context)" fra-1 || true
+kubectl --kubeconfig "$KUBECONFIG_FRA" config rename-context \
+  "$(kubectl --kubeconfig "$KUBECONFIG_FRA" config current-context)" fra || true
 
-kubectl --kubeconfig "$KUBECONFIG_FRA_2" config rename-context \
-  "$(kubectl --kubeconfig "$KUBECONFIG_FRA_2" config current-context)" fra-2 || true
+kubectl --kubeconfig "$KUBECONFIG_SEA" config rename-context \
+  "$(kubectl --kubeconfig "$KUBECONFIG_SEA" config current-context)" sea || true
 
 kubectl --kubeconfig "$KUBECONFIG_LON" get nodes -o wide
-kubectl --kubeconfig "$KUBECONFIG_FRA_1" get nodes -o wide
-kubectl --kubeconfig "$KUBECONFIG_FRA_2" get nodes -o wide
+kubectl --kubeconfig "$KUBECONFIG_FRA" get nodes -o wide
+kubectl --kubeconfig "$KUBECONFIG_SEA" get nodes -o wide
 ```
 
 ## Step 2 - Install Karmada in gb-lon
@@ -99,24 +99,24 @@ kubectl --kubeconfig "$KUBECONFIG_LON" -n karmada-system get pods
 kubectl --kubeconfig "$KARMADA_KUBECONFIG" get clusters.cluster.karmada.io
 ```
 
-## Step 3 - Join both de-fra-2 clusters into Karmada
+## Step 3 - Join both inference clusters into Karmada
 
 Set cluster names used by propagation policies:
 
 ```bash
-export KARMADA_CLUSTER_FRA_1="fra-1"
-export KARMADA_CLUSTER_FRA_2="fra-2"
+export KARMADA_CLUSTER_FRA="fra"
+export KARMADA_CLUSTER_SEA="sea"
 ```
 
-Join FRA-1 and FRA-2 as Karmada members:
+Join FRA and SEA as Karmada members:
 
 ```bash
-kubectl karmada join "$KARMADA_CLUSTER_FRA_1" \
-  --cluster-kubeconfig="$KUBECONFIG_FRA_1" \
+kubectl karmada join "$KARMADA_CLUSTER_FRA" \
+  --cluster-kubeconfig="$KUBECONFIG_FRA" \
   --kubeconfig="$KARMADA_KUBECONFIG"
 
-kubectl karmada join "$KARMADA_CLUSTER_FRA_2" \
-  --cluster-kubeconfig="$KUBECONFIG_FRA_2" \
+kubectl karmada join "$KARMADA_CLUSTER_SEA" \
+  --cluster-kubeconfig="$KUBECONFIG_SEA" \
   --kubeconfig="$KARMADA_KUBECONFIG"
 ```
 
@@ -142,11 +142,11 @@ helm repo update nvidia
 helm repo update kuberay
 ```
 
-Install NVIDIA GPU Operator on FRA-1:
+Install NVIDIA GPU Operator on FRA:
 
 ```bash
 helm upgrade --install gpu-operator nvidia/gpu-operator \
-  --kubeconfig="$KUBECONFIG_FRA_1" \
+  --kubeconfig="$KUBECONFIG_FRA" \
   --namespace gpu-operator \
   --create-namespace \
   --wait \
@@ -154,11 +154,11 @@ helm upgrade --install gpu-operator nvidia/gpu-operator \
   --set toolkit.enabled=false
 ```
 
-Install NVIDIA GPU Operator on FRA-2:
+Install NVIDIA GPU Operator on SEA:
 
 ```bash
 helm upgrade --install gpu-operator nvidia/gpu-operator \
-  --kubeconfig="$KUBECONFIG_FRA_2" \
+  --kubeconfig="$KUBECONFIG_SEA" \
   --namespace gpu-operator \
   --create-namespace \
   --wait \
@@ -166,22 +166,22 @@ helm upgrade --install gpu-operator nvidia/gpu-operator \
   --set toolkit.enabled=false
 ```
 
-Install KubeRay operator on FRA-1:
+Install KubeRay operator on FRA:
 
 ```bash
 helm upgrade --install kuberay-operator kuberay/kuberay-operator \
-  --kubeconfig="$KUBECONFIG_FRA_1" \
+  --kubeconfig="$KUBECONFIG_FRA" \
   --namespace kuberay-system \
   --create-namespace \
   --version 1.6.1 \
   --set image.tag=v1.6.1
 ```
 
-Install KubeRay operator on FRA-2:
+Install KubeRay operator on SEA:
 
 ```bash
 helm upgrade --install kuberay-operator kuberay/kuberay-operator \
-  --kubeconfig="$KUBECONFIG_FRA_2" \
+  --kubeconfig="$KUBECONFIG_SEA" \
   --namespace kuberay-system \
   --create-namespace \
   --version 1.6.1 \
@@ -191,11 +191,11 @@ helm upgrade --install kuberay-operator kuberay/kuberay-operator \
 Verify GPU and KubeRay operators on each member cluster:
 
 ```bash
-kubectl --kubeconfig "$KUBECONFIG_FRA_1" -n gpu-operator get pods
-kubectl --kubeconfig "$KUBECONFIG_FRA_2" -n gpu-operator get pods
+kubectl --kubeconfig "$KUBECONFIG_FRA" -n gpu-operator get pods
+kubectl --kubeconfig "$KUBECONFIG_SEA" -n gpu-operator get pods
 
-kubectl --kubeconfig "$KUBECONFIG_FRA_1" -n kuberay-system get pods
-kubectl --kubeconfig "$KUBECONFIG_FRA_2" -n kuberay-system get pods
+kubectl --kubeconfig "$KUBECONFIG_FRA" -n kuberay-system get pods
+kubectl --kubeconfig "$KUBECONFIG_SEA" -n kuberay-system get pods
 ```
 
 Expected: NVIDIA GPU Operator and KubeRay manager/webhook pods should be running on both GPU clusters.
@@ -208,7 +208,7 @@ Install the Linode Cloud Firewall controller on all three clusters. This follows
 helm repo add linode-cfw https://linode.github.io/cloud-firewall-controller
 helm repo update linode-cfw
 
-for KCFG in "$KUBECONFIG_LON" "$KUBECONFIG_FRA_1" "$KUBECONFIG_FRA_2"; do
+for KCFG in "$KUBECONFIG_LON" "$KUBECONFIG_FRA" "$KUBECONFIG_SEA"; do
   helm upgrade --install cloud-firewall-crd linode-cfw/cloud-firewall-crd \
     --kubeconfig="$KCFG"
 
@@ -286,13 +286,66 @@ Set required runtime and security variables:
 ```bash
 export HF_TOKEN="<huggingface-token-with-model-access>"
 export LAPTOP_CIDR="<your-public-ip>/32"
-export INFERENCE_API_KEY="<static-api-key-value>"
+export INFERENCE_API_KEY="$(openssl rand -base64 32)"
+export LITELLM_MASTER_KEY="sk-$(openssl rand -hex 32)"
+export LITELLM_POSTGRES_PASSWORD="$(openssl rand -hex 32)"
 ```
 
-Apply namespace in Karmada API:
+Validate that the Hugging Face token is not wrapped in smart quotes or other copied formatting characters:
+
+```bash
+if [[ ! "$HF_TOKEN" =~ ^hf_[A-Za-z0-9_]+$ ]]; then
+  echo "Error: HF_TOKEN should be a raw Hugging Face token starting with hf_. Re-copy it without quotes or rich-text formatting."
+  exit 1
+fi
+```
+
+Optionally save the current deployment environment to a local ignored `.env` file so you can restore it after opening a new shell:
+
+```bash
+umask 077
+{
+  printf 'export KUBECONFIG_LON=%q\n' "$KUBECONFIG_LON"
+  printf 'export KUBECONFIG_FRA=%q\n' "$KUBECONFIG_FRA"
+  printf 'export KUBECONFIG_SEA=%q\n' "$KUBECONFIG_SEA"
+  printf 'export KARMADA_KUBECONFIG=%q\n' "$KARMADA_KUBECONFIG"
+  printf 'export HF_TOKEN=%q\n' "$HF_TOKEN"
+  printf 'export LAPTOP_CIDR=%q\n' "$LAPTOP_CIDR"
+  printf 'export INFERENCE_API_KEY=%q\n' "$INFERENCE_API_KEY"
+  printf 'export LITELLM_MASTER_KEY=%q\n' "$LITELLM_MASTER_KEY"
+  printf 'export LITELLM_POSTGRES_PASSWORD=%q\n' "$LITELLM_POSTGRES_PASSWORD"
+  printf 'export REGIONAL_GATEWAY_SOURCE_RANGES=%q\n' "${REGIONAL_GATEWAY_SOURCE_RANGES:-}"
+  printf 'export REGIONAL_GATEWAY_FIREWALL_ALLOWLIST=%q\n' "${REGIONAL_GATEWAY_FIREWALL_ALLOWLIST:-}"
+  printf 'export FRA_ENDPOINT=%q\n' "${FRA_ENDPOINT:-}"
+  printf 'export SEA_ENDPOINT=%q\n' "${SEA_ENDPOINT:-}"
+  printf 'export LITELLM_ENDPOINT=%q\n' "${LITELLM_ENDPOINT:-}"
+} > .env
+```
+
+Restore it later with:
+
+```bash
+source .env
+```
+
+Key usage:
+
+- `INFERENCE_API_KEY` is the shared upstream secret used by LiteLLM to reach the regional inference gateways. Direct regional validation requests can also use it with `X-API-Key`.
+- `LITELLM_MASTER_KEY` is the LiteLLM admin key used for UI login, virtual key creation, and emergency API access with `Authorization: Bearer ${LITELLM_MASTER_KEY}`.
+- LiteLLM virtual keys are the preferred client-facing keys for users and applications.
+- `LITELLM_POSTGRES_PASSWORD` is used by the local PostgreSQL database required for LiteLLM UI login, virtual keys, budgets, and request metadata.
+- Keep these values different. Do not commit them to source control.
+
+Apply namespace in the Karmada API and member clusters:
 
 ```bash
 kubectl --kubeconfig "$KARMADA_KUBECONFIG" \
+  apply -f configs/kuberay/00-namespace.yaml
+
+kubectl --kubeconfig "$KUBECONFIG_FRA" \
+  apply -f configs/kuberay/00-namespace.yaml
+
+kubectl --kubeconfig "$KUBECONFIG_SEA" \
   apply -f configs/kuberay/00-namespace.yaml
 ```
 
@@ -303,7 +356,7 @@ helm show crds kuberay/kuberay-operator --version 1.6.1 | \
   kubectl --kubeconfig "$KARMADA_KUBECONFIG" apply --server-side -f -
 ```
 
-Apply templated resources through Karmada:
+Apply shared templated resources through Karmada:
 
 ```bash
 envsubst < configs/kuberay/05-hf-secret.yaml.tpl | \
@@ -312,39 +365,112 @@ envsubst < configs/kuberay/05-hf-secret.yaml.tpl | \
 envsubst < configs/kuberay/10-rayservice.yaml.tpl | \
   kubectl --kubeconfig "$KARMADA_KUBECONFIG" apply -f -
 
-envsubst '${LAPTOP_CIDR} ${INFERENCE_API_KEY}' < configs/inference/30-api-gateway.yaml.tpl | \
-  kubectl --kubeconfig "$KARMADA_KUBECONFIG" apply -f -
-
 envsubst < configs/karmada/30-inference-propagationpolicy.yaml.tpl | \
   kubectl --kubeconfig "$KARMADA_KUBECONFIG" apply -f -
+```
+
+Render the regional gateway source allowlists. These include your laptop CIDR and the public `gb-lon` LKE node IPs that LiteLLM can egress from:
+
+```bash
+export REGIONAL_GATEWAY_SOURCE_RANGES="$(./scripts/render_regional_gateway_source_ranges.sh)"
+export REGIONAL_GATEWAY_FIREWALL_ALLOWLIST="$(./scripts/render_regional_gateway_firewall_allowlist.sh)"
+
+printf '%s\n' "$REGIONAL_GATEWAY_SOURCE_RANGES"
+printf '%s\n' "$REGIONAL_GATEWAY_FIREWALL_ALLOWLIST"
+```
+
+Apply the regional gateways directly to each member cluster so their responses identify the serving location. The regional NodeBalancers use both `loadBalancerSourceRanges` and the Linode firewall ACL annotation to allow only your laptop and the discovered LiteLLM egress CIDRs:
+
+```bash
+kubectl --kubeconfig "$KARMADA_KUBECONFIG" -n llm-inference delete \
+  configmap/llm-api-gateway-nginx \
+  deployment.apps/llm-api-gateway \
+  service/llm-api-gateway \
+  --ignore-not-found
+
+SERVING_REGION="de-fra-2" SERVING_CLUSTER="fra" \
+  envsubst '${INFERENCE_API_KEY} ${SERVING_REGION} ${SERVING_CLUSTER} ${REGIONAL_GATEWAY_SOURCE_RANGES} ${REGIONAL_GATEWAY_FIREWALL_ALLOWLIST}' < configs/inference/30-api-gateway.yaml.tpl | \
+  kubectl --kubeconfig "$KUBECONFIG_FRA" apply -f -
+
+SERVING_REGION="us-sea" SERVING_CLUSTER="sea" \
+  envsubst '${INFERENCE_API_KEY} ${SERVING_REGION} ${SERVING_CLUSTER} ${REGIONAL_GATEWAY_SOURCE_RANGES} ${REGIONAL_GATEWAY_FIREWALL_ALLOWLIST}' < configs/inference/30-api-gateway.yaml.tpl | \
+  kubectl --kubeconfig "$KUBECONFIG_SEA" apply -f -
 ```
 
 Wait for resources to become ready:
 
 ```bash
-kubectl --kubeconfig "$KUBECONFIG_FRA_1" -n llm-inference get rayservices.ray.io
-kubectl --kubeconfig "$KUBECONFIG_FRA_2" -n llm-inference get rayservices.ray.io
+kubectl --kubeconfig "$KUBECONFIG_FRA" -n llm-inference get rayservices.ray.io
+kubectl --kubeconfig "$KUBECONFIG_SEA" -n llm-inference get rayservices.ray.io
 
-kubectl --kubeconfig "$KUBECONFIG_FRA_1" -n llm-inference rollout status deploy/llm-api-gateway --timeout=600s
-kubectl --kubeconfig "$KUBECONFIG_FRA_2" -n llm-inference rollout status deploy/llm-api-gateway --timeout=600s
+kubectl --kubeconfig "$KUBECONFIG_FRA" -n llm-inference rollout status deploy/llm-api-gateway --timeout=600s
+kubectl --kubeconfig "$KUBECONFIG_SEA" -n llm-inference rollout status deploy/llm-api-gateway --timeout=600s
 ```
 
 ## Step 7 - Retrieve NodeBalancer endpoints
 
 ```bash
-FRA_1_ENDPOINT=$(kubectl --kubeconfig "$KUBECONFIG_FRA_1" -n llm-inference get svc llm-api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-FRA_2_ENDPOINT=$(kubectl --kubeconfig "$KUBECONFIG_FRA_2" -n llm-inference get svc llm-api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export FRA_ENDPOINT="$(kubectl --kubeconfig "$KUBECONFIG_FRA" -n llm-inference get svc llm-api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+export SEA_ENDPOINT="$(kubectl --kubeconfig "$KUBECONFIG_SEA" -n llm-inference get svc llm-api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 
-echo "FRA-1 endpoint: http://${FRA_1_ENDPOINT}"
-echo "FRA-2 endpoint: http://${FRA_2_ENDPOINT}"
+if [[ -z "$FRA_ENDPOINT" || -z "$SEA_ENDPOINT" ]]; then
+  echo "Error: one or more regional NodeBalancer endpoints are empty. Wait for both llm-api-gateway services to get EXTERNAL-IP values."
+  exit 1
+fi
+
+echo "FRA endpoint: http://${FRA_ENDPOINT}"
+echo "SEA endpoint: http://${SEA_ENDPOINT}"
 ```
 
-## Step 8 - Send a prompt request
+## Step 8 - Deploy LiteLLM on gb-lon
 
-Example OpenAI-compatible request:
+Deploy LiteLLM as the central OpenAI-compatible entrypoint. Its LoadBalancer uses both `loadBalancerSourceRanges` and the Linode firewall ACL annotation to allow only your laptop CIDR.
 
 ```bash
-curl -s "http://${FRA_1_ENDPOINT}/v1/chat/completions" \
+kubectl --kubeconfig "$KUBECONFIG_LON" \
+  apply -f configs/litellm/00-namespace.yaml
+
+envsubst '${LITELLM_POSTGRES_PASSWORD}' < configs/litellm/05-postgres-secret.yaml.tpl | \
+  kubectl --kubeconfig "$KUBECONFIG_LON" apply -f -
+
+kubectl --kubeconfig "$KUBECONFIG_LON" \
+  apply -f configs/litellm/15-postgres.yaml
+
+kubectl --kubeconfig "$KUBECONFIG_LON" -n litellm-gateway \
+  rollout status statefulset/litellm-postgres --timeout=300s
+
+envsubst '${LITELLM_MASTER_KEY} ${INFERENCE_API_KEY} ${LITELLM_POSTGRES_PASSWORD}' < configs/litellm/10-secret.yaml.tpl | \
+  kubectl --kubeconfig "$KUBECONFIG_LON" apply -f -
+
+envsubst '${FRA_ENDPOINT} ${SEA_ENDPOINT}' < configs/litellm/20-config.yaml.tpl | \
+  kubectl --kubeconfig "$KUBECONFIG_LON" apply -f -
+
+kubectl --kubeconfig "$KUBECONFIG_LON" \
+  apply -f configs/litellm/30-deployment.yaml
+
+envsubst '${LAPTOP_CIDR}' < configs/litellm/40-service.yaml.tpl | \
+  kubectl --kubeconfig "$KUBECONFIG_LON" apply -f -
+
+kubectl --kubeconfig "$KUBECONFIG_LON" -n litellm-gateway \
+  rollout status deploy/litellm --timeout=300s
+```
+
+Retrieve the central LiteLLM endpoint:
+
+```bash
+export LITELLM_ENDPOINT="$(kubectl --kubeconfig "$KUBECONFIG_LON" -n litellm-gateway get svc litellm -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
+echo "LiteLLM endpoint: http://${LITELLM_ENDPOINT}"
+```
+
+For LiteLLM UI access, auth-layer details, failover testing, model aliases, and the local curl simulator, see [LITELLM.md](LITELLM.md).
+
+## Step 9 - Send prompt requests
+
+Example direct regional request:
+
+```bash
+curl -i "http://${FRA_ENDPOINT}/v1/chat/completions" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: ${INFERENCE_API_KEY}" \
   -d '{
@@ -355,15 +481,56 @@ curl -s "http://${FRA_1_ENDPOINT}/v1/chat/completions" \
     ],
     "temperature": 0.2,
     "max_tokens": 128
-  }' | jq
+  }'
+```
+
+The response headers identify which gateway handled the request:
+
+```http
+X-Serving-Region: de-fra-2
+X-Serving-Cluster: fra
+```
+
+Example central LiteLLM request with model-based routing:
+
+```bash
+curl -i "http://${LITELLM_ENDPOINT}/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${LITELLM_MASTER_KEY}" \
+  -d '{
+    "model": "mistral-global",
+    "messages": [
+      {"role": "system", "content": "You are concise."},
+      {"role": "user", "content": "Give me three benefits of multi-region inference."}
+    ],
+    "temperature": 0.2,
+    "max_tokens": 128
+  }'
+```
+
+Use explicit model aliases for header-free routing:
+
+```bash
+curl -i "http://${LITELLM_ENDPOINT}/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${LITELLM_MASTER_KEY}" \
+  -d '{
+    "model": "mistral-sea",
+    "messages": [
+      {"role": "user", "content": "Route this to us-sea."}
+    ],
+    "max_tokens": 64
+  }'
 ```
 
 Security checks:
 
 - Wrong API key returns `401`.
 - Non-allowlisted source IP is blocked at LoadBalancer source range.
+- Regional gateways allow only your laptop CIDR and discovered `gb-lon` LiteLLM egress CIDRs.
+- LiteLLM LoadBalancer allows only your laptop CIDR.
 
-## Step 9 - Troubleshooting
+## Step 10 - Troubleshooting
 
 - RayService not ready:
   - `kubectl -n llm-inference describe rayservice llm-serve`
@@ -376,6 +543,11 @@ Security checks:
 - Karmada propagation issues:
   - `kubectl --kubeconfig "$KARMADA_KUBECONFIG" get propagationpolicy,clusterpropagationpolicy -A`
   - `kubectl --kubeconfig "$KARMADA_KUBECONFIG" describe propagationpolicy llm-inference-policy -n llm-inference`
+- LiteLLM routing or health issues:
+  - `kubectl --kubeconfig "$KUBECONFIG_LON" -n litellm-gateway get pods,svc`
+  - `kubectl --kubeconfig "$KUBECONFIG_LON" -n litellm-gateway logs deploy/litellm --tail=200`
+  - `curl -i "http://${LITELLM_ENDPOINT}/health" -H "Authorization: Bearer ${LITELLM_MASTER_KEY}"`
+  - The Kubernetes probes use TCP checks because LiteLLM's `/health` endpoint is authenticated in this setup.
 - `kubectl karmada init` fails with `https://127.0.0.1:32443 ... connection refused`:
   - This means the init command generated localhost as apiserver endpoint.
   - Re-run init with explicit `--karmada-apiserver-advertise-address` and `--cert-external-ip` set to a reachable node IP.
@@ -383,11 +555,11 @@ Security checks:
 
 ## Optional Phase 2 - Geo-proximity global load balancer
 
-Use a global DNS/LB control plane (for example Akamai GTM) to route requests across the two FRA-2 regional endpoints. Even within a single region, multiple clusters provide high availability.
+Use a global DNS/LB control plane (for example Akamai GTM) to route requests across the FRA and SEA regional endpoints.
 
 Recommended behavior:
 
-- Distribute traffic across Cluster 1 and Cluster 2 in `de-fra-2`.
+- Route users to the closest healthy endpoint in `de-fra-2` or `us-sea`.
 - Monitor health of each NodeBalancer specifically.
 - On endpoint health failure, route all traffic to the remaining healthy cluster.
 

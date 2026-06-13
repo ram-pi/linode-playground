@@ -3,6 +3,10 @@
 # Optional: pin/override the Kubernetes version.
 k8s_version = "1.35"
 
+# Inference member regions.
+region_fra = "de-fra-2"
+region_sea = "us-sea"
+
 # Restrict control-plane access if desired.
 control_plane_ipv4_whitelist_cidrs = [
   "0.0.0.0/0"

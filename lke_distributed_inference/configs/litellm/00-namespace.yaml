@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: litellm-gateway
+  labels:
+    app.kubernetes.io/name: litellm-gateway
+    app.kubernetes.io/part-of: distributed-inference-demo

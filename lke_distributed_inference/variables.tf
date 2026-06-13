@@ -17,9 +17,15 @@ variable "region_lon" {
 }
 
 variable "region_fra" {
-  description = "Inference worker region (both GPU clusters)"
+  description = "European inference worker region"
   type        = string
   default     = "de-fra-2"
+}
+
+variable "region_sea" {
+  description = "North America inference worker region"
+  type        = string
+  default     = "us-sea"
 }
 
 variable "standard_pool_type" {

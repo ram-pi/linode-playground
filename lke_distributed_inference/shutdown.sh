@@ -26,6 +26,6 @@ rm -rf .terraform .tofu
 rm -rf .karmada
 rm -f .terraform.lock.hcl .tofu.lock.hcl
 rm -f terraform.tfstate terraform.tfstate.backup tfplan
-rm -f kubeconfig-gb-lon kubeconfig-de-fra-2-1 kubeconfig-de-fra-2-2
+rm -f kubeconfig-gb-lon kubeconfig-de-fra-2 kubeconfig-us-sea
 
 echo "Cleanup complete."

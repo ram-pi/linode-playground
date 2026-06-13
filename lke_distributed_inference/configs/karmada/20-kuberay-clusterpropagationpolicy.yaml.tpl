@@ -12,5 +12,5 @@ spec:
   placement:
     clusterAffinity:
       clusterNames:
-        - ${KARMADA_CLUSTER_FRA_1}
-        - ${KARMADA_CLUSTER_FRA_2}
+        - ${KARMADA_CLUSTER_FRA}
+        - ${KARMADA_CLUSTER_SEA}

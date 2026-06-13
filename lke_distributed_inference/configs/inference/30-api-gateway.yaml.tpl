@@ -11,6 +11,9 @@ data:
       server {
         listen 8080;
 
+        add_header X-Serving-Region '${SERVING_REGION}' always;
+        add_header X-Serving-Cluster '${SERVING_CLUSTER}' always;
+
         # Keep expected API key in a variable to avoid fragile inline comparisons.
         set $expected_api_key '${INFERENCE_API_KEY}';
 
@@ -20,7 +23,17 @@ data:
         }
 
         location / {
-          if ($http_x_api_key != $expected_api_key) {
+          set $api_key_valid 0;
+
+          if ($http_x_api_key = $expected_api_key) {
+            set $api_key_valid 1;
+          }
+
+          if ($http_authorization = "Bearer ${INFERENCE_API_KEY}") {
+            set $api_key_valid 1;
+          }
+
+          if ($api_key_valid != 1) {
             return 401;
           }
 
@@ -34,6 +47,8 @@ data:
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Serving-Region '${SERVING_REGION}';
+          proxy_set_header X-Serving-Cluster '${SERVING_CLUSTER}';
           proxy_pass http://$ray_upstream:8000;
         }
       }
@@ -95,12 +110,19 @@ metadata:
   name: llm-api-gateway
   namespace: llm-inference
   annotations:
+    service.beta.kubernetes.io/linode-loadbalancer-firewall-acl: |
+      {
+        "allowList": {
+          "ipv4": [${REGIONAL_GATEWAY_FIREWALL_ALLOWLIST}]
+        }
+      }
+    service.beta.kubernetes.io/linode-loadbalancer-tags: "distributed-inference,akamai-summit"
     service.beta.kubernetes.io/linode-loadbalancer-throttle: "20"
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Local
   loadBalancerSourceRanges:
-    - ${LAPTOP_CIDR}
+${REGIONAL_GATEWAY_SOURCE_RANGES}
   selector:
     app: llm-api-gateway
   ports:

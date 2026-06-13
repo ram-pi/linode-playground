@@ -30,9 +30,9 @@ resource "linode_lke_cluster" "cluster_lon" {
   }
 }
 
-# Cluster 2 — de-fra-2 #1: Karmada member, standard + GPU
-resource "linode_lke_cluster" "cluster_fra_1" {
-  label       = local.cluster_fra_1_name
+# Cluster 2 — de-fra-2: Karmada member, standard + GPU
+resource "linode_lke_cluster" "cluster_fra" {
+  label       = local.cluster_fra_name
   region      = var.region_fra
   k8s_version = var.k8s_version
   tier        = "standard"
@@ -45,7 +45,7 @@ resource "linode_lke_cluster" "cluster_fra_1" {
     labels = {
       role    = "worker"
       region  = var.region_fra
-      cluster = "fra-1"
+      cluster = "fra"
       pool    = "standard"
     }
   }
@@ -56,7 +56,7 @@ resource "linode_lke_cluster" "cluster_fra_1" {
     labels = {
       role    = "gpu-worker"
       region  = var.region_fra
-      cluster = "fra-1"
+      cluster = "fra"
       pool    = "gpu"
     }
   }
@@ -73,22 +73,22 @@ resource "linode_lke_cluster" "cluster_fra_1" {
   }
 }
 
-# Cluster 3 — de-fra-2 #2: Karmada member, standard + GPU
-resource "linode_lke_cluster" "cluster_fra_2" {
-  label       = local.cluster_fra_2_name
-  region      = var.region_fra
+# Cluster 3 — us-sea: Karmada member, standard + GPU
+resource "linode_lke_cluster" "cluster_sea" {
+  label       = local.cluster_sea_name
+  region      = var.region_sea
   k8s_version = var.k8s_version
   tier        = "standard"
   apl_enabled = false
-  tags        = concat(local.common_tags, ["region-fra", "karmada-member"])
+  tags        = concat(local.common_tags, ["region-sea", "karmada-member"])
 
   pool {
     type  = var.standard_pool_type
     count = var.standard_pool_count
     labels = {
       role    = "worker"
-      region  = var.region_fra
-      cluster = "fra-2"
+      region  = var.region_sea
+      cluster = "sea"
       pool    = "standard"
     }
   }
@@ -98,8 +98,8 @@ resource "linode_lke_cluster" "cluster_fra_2" {
     count = var.gpu_pool_count
     labels = {
       role    = "gpu-worker"
-      region  = var.region_fra
-      cluster = "fra-2"
+      region  = var.region_sea
+      cluster = "sea"
       pool    = "gpu"
     }
   }
@@ -122,14 +122,14 @@ resource "local_file" "kubeconfig_lon" {
   file_permission = "0600"
 }
 
-resource "local_file" "kubeconfig_fra_1" {
-  filename        = "${path.module}/kubeconfig-de-fra-2-1"
-  content         = base64decode(linode_lke_cluster.cluster_fra_1.kubeconfig)
+resource "local_file" "kubeconfig_fra" {
+  filename        = "${path.module}/kubeconfig-de-fra-2"
+  content         = base64decode(linode_lke_cluster.cluster_fra.kubeconfig)
   file_permission = "0600"
 }
 
-resource "local_file" "kubeconfig_fra_2" {
-  filename        = "${path.module}/kubeconfig-de-fra-2-2"
-  content         = base64decode(linode_lke_cluster.cluster_fra_2.kubeconfig)
+resource "local_file" "kubeconfig_sea" {
+  filename        = "${path.module}/kubeconfig-us-sea"
+  content         = base64decode(linode_lke_cluster.cluster_sea.kubeconfig)
   file_permission = "0600"
 }
