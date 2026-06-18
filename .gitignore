@@ -151,6 +151,7 @@ multi_cluster_discovery/certs/postgresql-ca.crt
 
 # object_storage_signed_urls generated runtime files
 object_storage_signed_urls/.runtime.env
+lke_distributed_inference/.env
 object_storage_signed_urls/signed_urls.db
 object_storage_signed_urls/sample.txt
 object_storage_signed_urls/large-sample.bin
@@ -168,3 +169,37 @@ results/
 **/.karmada
 **/kubeconfig*
 **/tfplan
+
+# consolidated internal .gitignore rules
+
+# lke-model-cache-benchmark
+lke-model-cache-benchmark/.env.local
+lke-model-cache-benchmark/.model-cache/
+lke-model-cache-benchmark/.runtime.env
+lke-model-cache-benchmark/benchmark-results/
+lke-model-cache-benchmark/kubeconfig
+
+# lke-kserve-kuberay-cache-benchmark
+lke-kserve-kuberay-cache-benchmark/.env.local
+lke-kserve-kuberay-cache-benchmark/.runtime.env
+lke-kserve-kuberay-cache-benchmark/kubeconfig
+lke-kserve-kuberay-cache-benchmark/benchmark-results/
+
+# lke-with-bucket-mount
+lke-with-bucket-mount/.env.local
+lke-with-bucket-mount/kubeconfig
+lke-with-bucket-mount/outfile*
+lke-with-bucket-mount/gcs-sa-key-*.json
+lke-with-bucket-mount/*.json
+lke-with-bucket-mount/**/*.json
+
+# linode_third_party_auth
+linode_third_party_auth/.env
+linode_third_party_auth/.app.pid
+linode_third_party_auth/data/linode_oauth_token.json
+
+# vpc_flow_logs_ktranslate_clickhouse_grafana
+vpc_flow_logs_ktranslate_clickhouse_grafana/terraform.tfvars
+vpc_flow_logs_ktranslate_clickhouse_grafana/kubeconfig
+vpc_flow_logs_ktranslate_clickhouse_grafana/tmp/id_rsa_vpc_flowlogs
+vpc_flow_logs_ktranslate_clickhouse_grafana/tmp/id_rsa_vpc_flowlogs.pub

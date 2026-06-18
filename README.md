@@ -253,6 +253,23 @@ Multi-cluster inference architecture for **Mistral-7B-v0.3** using Karmada for o
 </details>
 
 <details>
+<summary><b>🧠 <a href="lke-model-cache-benchmark/">LKE Model Cache Benchmark</a></b> - <code>lke-model-cache-benchmark/</code></summary>
+
+Benchmark cold-start model serving on LKE GPU nodes by comparing direct Object Storage download during pod startup versus node-local hostPath cache prefetch.
+
+**Demonstrates:**
+- LKE GPU inference startup benchmarking with `llama.cpp`
+- Direct S3-compatible Object Storage download path (`llama-s3-download`)
+- Node-local model prefetch with DaemonSet (`model-prefetch`)
+- HostPath cache reuse path (`llama-hostpath-cache`)
+- First-request latency and rollout timing collection into CSV
+- Default 24 GB VRAM test profile with `bartowski/Qwen2.5-14B-Instruct-GGUF`
+
+**Additional tools required:** `tofu`, `kubectl`, `helm`, `envsubst`, `curl`, `python3`, `uv`
+
+</details>
+
+<details>
 <summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.

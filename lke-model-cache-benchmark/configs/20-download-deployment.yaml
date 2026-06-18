@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-s3-download
+  namespace: model-cache-benchmark
+  labels:
+    app: llama-s3-download
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-s3-download
+  template:
+    metadata:
+      labels:
+        app: llama-s3-download
+    spec:
+      nodeSelector:
+        pool: gpu
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      volumes:
+        - name: model
+          emptyDir: {}
+        - name: benchmark
+          emptyDir: {}
+      initContainers:
+        - name: download-model
+          image: amazon/aws-cli:2.17.60
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: model-config
+            - secretRef:
+                name: s3-credentials
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              start=$(date +%s%3N)
+              aws --endpoint-url "$LINODE_ENDPOINT" s3 cp "s3://$LINODE_BUCKET/$MODEL_OBJECT_KEY" "$MODEL_PATH"
+              end=$(date +%s%3N)
+              echo "$((end - start))" > /benchmark/download_ms
+              ls -lh "$MODEL_PATH"
+          volumeMounts:
+            - name: model
+              mountPath: /models
+            - name: benchmark
+              mountPath: /benchmark
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+      containers:
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server-cuda
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MODEL_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: model-config
+                  key: MODEL_PATH
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              start=$(date +%s%3N)
+              echo "$start" > /benchmark/server_start_ms
+              if command -v llama-server >/dev/null 2>&1; then
+                exec llama-server -m "$MODEL_PATH" --host 0.0.0.0 --port 8080 --n-gpu-layers 99 --ctx-size 2048
+              fi
+              exec /app/llama-server -m "$MODEL_PATH" --host 0.0.0.0 --port 8080 --n-gpu-layers 99 --ctx-size 2048
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 120
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 180
+          volumeMounts:
+            - name: model
+              mountPath: /models
+              readOnly: true
+            - name: benchmark
+              mountPath: /benchmark
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+              nvidia.com/gpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-s3-download
+  namespace: model-cache-benchmark
+spec:
+  selector:
+    app: llama-s3-download
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

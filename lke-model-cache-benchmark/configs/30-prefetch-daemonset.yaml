@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: model-prefetch
+  namespace: model-cache-benchmark
+  labels:
+    app: model-prefetch
+spec:
+  selector:
+    matchLabels:
+      app: model-prefetch
+  template:
+    metadata:
+      labels:
+        app: model-prefetch
+    spec:
+      nodeSelector:
+        pool: gpu
+      tolerations:
+        - operator: "Exists"
+      volumes:
+        - name: host-cache
+          hostPath:
+            path: /var/lib/model-cache-benchmark
+            type: DirectoryOrCreate
+      containers:
+        - name: prefetch
+          image: amazon/aws-cli:2.17.60
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: model-config
+            - secretRef:
+                name: s3-credentials
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              marker="/host-cache/.ready"
+              model="/host-cache/model.gguf"
+              key_marker="/host-cache/.model_object_key"
+              current_key="$LINODE_BUCKET/$MODEL_OBJECT_KEY"
+              cached_key="$(cat "$key_marker" 2>/dev/null || true)"
+              if [ ! -s "$model" ] || [ ! -f "$marker" ] || [ "$cached_key" != "$current_key" ]; then
+                rm -f "$marker" "$key_marker" "$model.tmp"
+                start=$(date +%s%3N)
+                aws --endpoint-url "$LINODE_ENDPOINT" s3 cp "s3://$LINODE_BUCKET/$MODEL_OBJECT_KEY" "$model.tmp"
+                mv "$model.tmp" "$model"
+                end=$(date +%s%3N)
+                echo "$((end - start))" > /host-cache/download_ms
+                echo "$current_key" > "$key_marker"
+                date -Iseconds > "$marker"
+              fi
+              ls -lh "$model"
+              sleep infinity
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  test -s /host-cache/model.gguf
+                  test -f /host-cache/.ready
+                  test -f /host-cache/.model_object_key
+                  test "$(cat /host-cache/.model_object_key)" = "$LINODE_BUCKET/$MODEL_OBJECT_KEY"
+            periodSeconds: 5
+            failureThreshold: 120
+          volumeMounts:
+            - name: host-cache
+              mountPath: /host-cache
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
