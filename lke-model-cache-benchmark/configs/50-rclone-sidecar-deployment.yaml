@@ -1,0 +1,177 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-rclone-sidecar
+  namespace: model-cache-benchmark
+  labels:
+    app: llama-rclone-sidecar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-rclone-sidecar
+  template:
+    metadata:
+      labels:
+        app: llama-rclone-sidecar
+    spec:
+      nodeSelector:
+        pool: gpu
+      # fsGroup applied to shared volumes so the llama-server user (1000:2000)
+      # can read the /benchmark emptyDir. The rclone sidecar overrides per-container
+      # to run as root (required for FUSE mount with --allow-other).
+      securityContext:
+        fsGroup: 2000
+        fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+      volumes:
+        - name: bucket-mount
+          emptyDir: {}
+        - name: benchmark
+          emptyDir: {}
+      containers:
+        # ── Sidecar: mounts the Object Storage bucket via rclone FUSE ──────────
+        - name: rclone-sidecar
+          image: rclone/rclone:1.68
+          imagePullPolicy: IfNotPresent
+          # privileged is required so the FUSE mount propagates to other containers
+          # via mountPropagation: Bidirectional.
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            privileged: true
+          envFrom:
+            - configMapRef:
+                name: model-config
+            - secretRef:
+                name: s3-credentials
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              # Strip scheme from endpoint (rclone expects host-only)
+              endpoint="${LINODE_ENDPOINT#https://}"
+              endpoint="${endpoint#http://}"
+
+              mkdir -p /root/.config/rclone
+              {
+                echo '[linode]'
+                echo 'type = s3'
+                echo 'provider = Ceph'
+                echo "access_key_id = $AWS_ACCESS_KEY_ID"
+                echo "secret_access_key = $AWS_SECRET_ACCESS_KEY"
+                echo "endpoint = $endpoint"
+                echo 'acl = private'
+              } > /root/.config/rclone/rclone.conf
+
+              mkdir -p /mnt/bucket
+              echo "Mounting linode:$LINODE_BUCKET at /mnt/bucket"
+              # VFS full-cache mode with a large cache size allows rclone to buffer model chunks in memory,
+              # improving performance while keeping memory usage manageable.
+              # --vfs-cache-max-size should match model size; the benchmark model is ~4.5GB, so 10G allows some headroom for caching.
+              # --vfs-read-ahead prefetches additional data after each read, which can improve performance for sequential access patterns common in model inference.
+              rclone mount "linode:$LINODE_BUCKET" /mnt/bucket --vfs-cache-mode=full --vfs-cache-max-size=10G --vfs-read-chunk-size=64M --buffer-size=64M --dir-cache-time=1h --allow-other --allow-non-empty --no-checksum
+          volumeMounts:
+            - name: bucket-mount
+              mountPath: /mnt/bucket
+              # Bidirectional propagates the FUSE mount to the host so other
+              # containers in the pod can see it via HostToContainer.
+              mountPropagation: Bidirectional
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              # VFS full-cache buffers model chunks in memory; allow enough headroom.
+              memory: "12Gi"
+
+        # ── Main: llama.cpp inference server ────────────────────────────────────
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server-cuda
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 2000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: MODEL_OBJECT_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: model-config
+                  key: MODEL_OBJECT_KEY
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              model_path="/mnt/bucket/$MODEL_OBJECT_KEY"
+              echo "Waiting for rclone mount and model at $model_path"
+              for i in $(seq 1 120); do
+                if [ -s "$model_path" ]; then
+                  break
+                fi
+                sleep 2
+              done
+              if [ ! -s "$model_path" ]; then
+                echo "ERROR: model not found at $model_path after 240s"
+                exit 1
+              fi
+              start=$(date +%s%3N)
+              echo "$start" > /benchmark/server_start_ms
+              if command -v llama-server >/dev/null 2>&1; then
+                exec llama-server -m "$model_path" --host 0.0.0.0 --port 8080 \
+                  --n-gpu-layers 99 --ctx-size 2048
+              fi
+              exec /app/llama-server -m "$model_path" --host 0.0.0.0 --port 8080 \
+                --n-gpu-layers 99 --ctx-size 2048
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 120
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 180
+          volumeMounts:
+            - name: bucket-mount
+              mountPath: /mnt/bucket
+              # HostToContainer receives the FUSE mount propagated by the sidecar.
+              mountPropagation: HostToContainer
+            - name: benchmark
+              mountPath: /benchmark
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+              nvidia.com/gpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-rclone-sidecar
+  namespace: model-cache-benchmark
+spec:
+  selector:
+    app: llama-rclone-sidecar
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

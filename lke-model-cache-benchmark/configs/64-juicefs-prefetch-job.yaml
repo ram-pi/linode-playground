@@ -1,0 +1,80 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: juicefs-prefetch
+  namespace: model-cache-benchmark
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: juicefs-prefetch
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        pool: standard
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 2000
+        fsGroup: 2000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: prefetch
+          image: amazon/aws-cli:2.17.60
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - configMapRef:
+                name: model-config
+            - secretRef:
+                name: s3-credentials
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              marker="/models/.ready"
+              model="/models/model.gguf"
+              key_marker="/models/.model_object_key"
+              current_key="$LINODE_BUCKET/$MODEL_OBJECT_KEY"
+              current_model_name="$(basename "$MODEL_OBJECT_KEY")"
+              current_model_path="/models/$current_model_name"
+              cached_key="$(cat "$key_marker" 2>/dev/null || true)"
+
+              find /models -maxdepth 1 -type f -name '*.gguf' ! -name "$current_model_name" -delete
+
+              if [ ! -s "$current_model_path" ] || [ ! -f "$marker" ] || [ "$cached_key" != "$current_key" ]; then
+                rm -f "$marker" "$key_marker" "$current_model_path.tmp" "$model.tmp"
+                start=$(date +%s%3N)
+                aws --endpoint-url "$LINODE_ENDPOINT" s3 cp "s3://$LINODE_BUCKET/$MODEL_OBJECT_KEY" "$current_model_path.tmp"
+                mv "$current_model_path.tmp" "$current_model_path"
+                end=$(date +%s%3N)
+                echo "$((end - start))" > /models/download_ms
+                echo "$current_key" > "$key_marker"
+                date '+%Y-%m-%dT%H:%M:%S%z' > "$marker"
+              else
+                echo "0" > /models/download_ms
+              fi
+
+              ln -sfn "$current_model_name" "$model"
+              echo "download_ms=$(cat /models/download_ms)"
+              ls -lh "$model" "$current_model_path"
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              mountPropagation: HostToContainer
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: juicefs-model-cache

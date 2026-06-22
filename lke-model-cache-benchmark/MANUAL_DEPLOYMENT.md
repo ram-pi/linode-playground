@@ -2,6 +2,12 @@
 
 Use this if you want to run the phases separately instead of relying on `start.sh` and `scripts/run-benchmark.sh`.
 
+## Security and Cache Notes
+
+- Prefetch and inference pods use aligned runtime IDs (`runAsUser: 1000`, `runAsGroup: 2000`, `fsGroup: 2000`) to avoid hostPath permission drift.
+- The prefetch DaemonSet maintains `model.gguf` as a symlink to the active model object basename from `MODEL_OBJECT_KEY`.
+- A built-in cache garbage collector deletes stale `*.gguf` files that do not match the current `MODEL_OBJECT_KEY`.
+
 ## 1. Provision Infrastructure
 
 ```bash

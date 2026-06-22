@@ -43,11 +43,26 @@ resource "linode_object_storage_bucket" "model" {
   region = var.object_storage_region
 }
 
+resource "linode_object_storage_bucket" "juicefs" {
+  label  = local.juicefs_bucket_label
+  region = var.object_storage_region
+}
+
 resource "linode_object_storage_key" "model" {
   label = "${local.bucket_label}-key"
 
   bucket_access {
     bucket_name = linode_object_storage_bucket.model.label
+    region      = var.object_storage_region
+    permissions = "read_write"
+  }
+}
+
+resource "linode_object_storage_key" "juicefs" {
+  label = "${local.juicefs_bucket_label}-key"
+
+  bucket_access {
+    bucket_name = linode_object_storage_bucket.juicefs.label
     region      = var.object_storage_region
     permissions = "read_write"
   }

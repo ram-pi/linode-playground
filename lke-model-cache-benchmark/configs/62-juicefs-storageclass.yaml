@@ -1,0 +1,16 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: juicefs-rwx
+provisioner: csi.juicefs.com
+parameters:
+  csi.storage.k8s.io/provisioner-secret-name: juicefs-secret
+  csi.storage.k8s.io/provisioner-secret-namespace: model-cache-benchmark
+  csi.storage.k8s.io/node-publish-secret-name: juicefs-secret
+  csi.storage.k8s.io/node-publish-secret-namespace: model-cache-benchmark
+  juicefs/mount-cpu-request: "500m"
+  juicefs/mount-memory-request: "512Mi"
+  juicefs/mount-cpu-limit: "5"
+  juicefs/mount-memory-limit: "5Gi"
+reclaimPolicy: Delete
+allowVolumeExpansion: true

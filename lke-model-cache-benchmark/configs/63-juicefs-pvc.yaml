@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: juicefs-model-cache
+  namespace: model-cache-benchmark
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: juicefs-rwx
+  resources:
+    requests:
+      storage: 64Gi

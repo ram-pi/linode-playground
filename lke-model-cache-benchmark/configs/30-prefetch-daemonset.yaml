@@ -16,6 +16,11 @@ spec:
     spec:
       nodeSelector:
         pool: gpu
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 2000
+        fsGroup: 2000
+        fsGroupChangePolicy: OnRootMismatch
       tolerations:
         - operator: "Exists"
       volumes:
@@ -23,10 +28,36 @@ spec:
           hostPath:
             path: /var/lib/model-cache-benchmark
             type: DirectoryOrCreate
+      initContainers:
+        - name: prepare-cache-permissions
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              mkdir -p /host-cache
+              chown -R 1000:2000 /host-cache
+              chmod 2775 /host-cache
+              find /host-cache -maxdepth 1 -type f -exec chmod ug+rw {} \;
+              find /host-cache -maxdepth 1 -type l -exec chown -h 1000:2000 {} \;
+          volumeMounts:
+            - name: host-cache
+              mountPath: /host-cache
       containers:
         - name: prefetch
           image: amazon/aws-cli:2.17.60
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           envFrom:
             - configMapRef:
                 name: model-config
@@ -40,17 +71,25 @@ spec:
               model="/host-cache/model.gguf"
               key_marker="/host-cache/.model_object_key"
               current_key="$LINODE_BUCKET/$MODEL_OBJECT_KEY"
+              current_model_name="$(basename "$MODEL_OBJECT_KEY")"
+              current_model_path="/host-cache/$current_model_name"
               cached_key="$(cat "$key_marker" 2>/dev/null || true)"
-              if [ ! -s "$model" ] || [ ! -f "$marker" ] || [ "$cached_key" != "$current_key" ]; then
-                rm -f "$marker" "$key_marker" "$model.tmp"
+
+              # Garbage collector: remove stale cached models when key changes.
+              find /host-cache -maxdepth 1 -type f -name '*.gguf' ! -name "$current_model_name" -delete
+
+              if [ ! -s "$current_model_path" ] || [ ! -f "$marker" ] || [ "$cached_key" != "$current_key" ]; then
+                rm -f "$marker" "$key_marker" "$current_model_path.tmp" "$model.tmp"
                 start=$(date +%s%3N)
-                aws --endpoint-url "$LINODE_ENDPOINT" s3 cp "s3://$LINODE_BUCKET/$MODEL_OBJECT_KEY" "$model.tmp"
-                mv "$model.tmp" "$model"
+                aws --endpoint-url "$LINODE_ENDPOINT" s3 cp "s3://$LINODE_BUCKET/$MODEL_OBJECT_KEY" "$current_model_path.tmp"
+                mv "$current_model_path.tmp" "$current_model_path"
                 end=$(date +%s%3N)
                 echo "$((end - start))" > /host-cache/download_ms
                 echo "$current_key" > "$key_marker"
                 date -Iseconds > "$marker"
               fi
+
+              ln -sfn "$current_model_name" "$model"
               ls -lh "$model"
               sleep infinity
           readinessProbe:
@@ -60,6 +99,7 @@ spec:
                 - -ec
                 - |
                   test -s /host-cache/model.gguf
+                  test -s "/host-cache/$(basename "$MODEL_OBJECT_KEY")"
                   test -f /host-cache/.ready
                   test -f /host-cache/.model_object_key
                   test "$(cat /host-cache/.model_object_key)" = "$LINODE_BUCKET/$MODEL_OBJECT_KEY"

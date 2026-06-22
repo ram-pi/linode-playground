@@ -7,7 +7,8 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  cluster_label = var.name_prefix
-  bucket_label  = "${var.name_prefix}-${random_string.suffix.result}"
-  common_tags   = ["lke-model-cache-benchmark", "gpu", "object-storage"]
+  cluster_label        = var.name_prefix
+  bucket_label         = "${var.name_prefix}-${random_string.suffix.result}"
+  juicefs_bucket_label = "${var.name_prefix}-juicefs-${random_string.suffix.result}"
+  common_tags          = ["lke-model-cache-benchmark", "gpu", "object-storage"]
 }

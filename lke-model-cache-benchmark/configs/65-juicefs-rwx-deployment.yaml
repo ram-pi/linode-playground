@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llama-s3-download
+  name: llama-juicefs-rwx
   namespace: model-cache-benchmark
   labels:
-    app: llama-s3-download
+    app: llama-juicefs-rwx
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: llama-s3-download
+      app: llama-juicefs-rwx
   template:
     metadata:
       labels:
-        app: llama-s3-download
+        app: llama-juicefs-rwx
     spec:
       nodeSelector:
         pool: gpu
@@ -27,46 +27,11 @@ spec:
           operator: "Exists"
           effect: "NoSchedule"
       volumes:
-        - name: model
-          emptyDir: {}
+        - name: models
+          persistentVolumeClaim:
+            claimName: juicefs-model-cache
         - name: benchmark
           emptyDir: {}
-      initContainers:
-        - name: download-model
-          image: amazon/aws-cli:2.17.60
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-          envFrom:
-            - configMapRef:
-                name: model-config
-            - secretRef:
-                name: s3-credentials
-          command:
-            - /bin/sh
-            - -ec
-            - |
-              start=$(date +%s%3N)
-              aws --endpoint-url "$LINODE_ENDPOINT" s3 cp "s3://$LINODE_BUCKET/$MODEL_OBJECT_KEY" "$MODEL_PATH"
-              end=$(date +%s%3N)
-              echo "$((end - start))" > /benchmark/download_ms
-              ls -lh "$MODEL_PATH"
-          volumeMounts:
-            - name: model
-              mountPath: /models
-            - name: benchmark
-              mountPath: /benchmark
-          resources:
-            requests:
-              cpu: "500m"
-              memory: "512Mi"
-            limits:
-              cpu: "2"
-              memory: "2Gi"
       containers:
         - name: llama-server
           image: ghcr.io/ggml-org/llama.cpp:server-cuda
@@ -79,14 +44,12 @@ spec:
                 - ALL
           env:
             - name: MODEL_PATH
-              valueFrom:
-                configMapKeyRef:
-                  name: model-config
-                  key: MODEL_PATH
+              value: /models/model.gguf
           command:
             - /bin/sh
             - -ec
             - |
+              test -s "$MODEL_PATH"
               start=$(date +%s%3N)
               echo "$start" > /benchmark/server_start_ms
               if command -v llama-server >/dev/null 2>&1; then
@@ -110,9 +73,10 @@ spec:
             periodSeconds: 5
             failureThreshold: 180
           volumeMounts:
-            - name: model
+            - name: models
               mountPath: /models
               readOnly: true
+              mountPropagation: HostToContainer
             - name: benchmark
               mountPath: /benchmark
           resources:
@@ -128,11 +92,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: llama-s3-download
+  name: llama-juicefs-rwx
   namespace: model-cache-benchmark
 spec:
   selector:
-    app: llama-s3-download
+    app: llama-juicefs-rwx
   ports:
     - name: http
       port: 8080
