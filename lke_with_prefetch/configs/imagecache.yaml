@@ -1,0 +1,15 @@
+apiVersion: kubefledged.io/v1alpha2
+kind: ImageCache
+metadata:
+  name: node-image-cache
+  namespace: kube-fledged
+  labels:
+    app: node-image-cache
+spec:
+  cacheSpec:
+    - images:
+        - python:3.11-slim
+        - nvidia/cuda:12.4.0-runtime-ubuntu22.04
+  # Uncomment and create the secret first if hitting Docker Hub rate limits:
+  # imagePullSecrets:
+  #   - name: dockerhub-credentials

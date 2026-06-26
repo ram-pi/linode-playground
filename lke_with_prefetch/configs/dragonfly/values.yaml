@@ -1,0 +1,52 @@
+# Install:
+#   export KUBECONFIG="./kubeconfig.yaml"
+#   helm repo add dragonfly https://dragonflyoss.github.io/helm-charts/
+#   helm repo update dragonfly
+#   helm upgrade --install dragonfly dragonfly/dragonfly \
+#     --namespace dragonfly-system \
+#     --create-namespace \
+#     -f configs/dragonfly/values.yaml \
+#     --wait --timeout 10m
+#
+# First install note:
+# - client.dfinit.restartContainerRuntime=true may restart containerd on each node.
+# - After the first successful install, set it to false before routine upgrades.
+
+client:
+  # Roll nodes more safely than the chart default (20 unavailable).
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+
+  # Enable node-local containerd mirror configuration through Dragonfly's built-in dfinit.
+  dfinit:
+    enable: true
+    restartContainerRuntime: true
+    config:
+      containerRuntime:
+        containerd:
+          # Mirror all registries by default through Dragonfly.
+          proxyAllRegistries: true
+          # Uncomment and customize explicit registries if you want specific
+          # upstream settings to override the catch-all mirror behavior.
+          # registries:
+          #   - hostNamespace: docker.io
+          #     serverAddr: https://registry-1.docker.io
+          #     capabilities:
+          #       - pull
+          #       - resolve
+          #     skipVerify: false
+          #   - hostNamespace: ghcr.io
+          #     serverAddr: https://ghcr.io
+          #     capabilities:
+          #       - pull
+          #       - resolve
+          #     skipVerify: false
+          #   - hostNamespace: us-east1-docker.pkg.dev
+          #     serverAddr: https://us-east1-docker.pkg.dev
+          #     capabilities:
+          #       - pull
+          #       - resolve
+          #     skipVerify: false

@@ -1,0 +1,29 @@
+# Install:
+#   export KUBECONFIG="./kubeconfig.yaml"
+#   helm repo add kubefledged-charts https://senthilrch.github.io/kubefledged-charts/
+#   helm repo update kubefledged-charts
+#   helm upgrade --install kube-fledged kubefledged-charts/kube-fledged \
+#     --namespace kube-fledged \
+#     --create-namespace \
+#     -f configs/kube-fledged/values.yaml \
+#     --wait --timeout 5m
+
+image:
+  # Avoid unnecessary control-plane image pulls during restarts.
+  pullPolicy: IfNotPresent
+
+args:
+  # Large images and OCI model artifacts can take longer than the chart default 5m.
+  controllerImagePullDeadlineDuration: 60m
+
+  # Periodically repair node cache drift while the ImageCache CRD exists.
+  controllerImageCacheRefreshFrequency: 6h
+
+resources:
+  # Keep the controller lightweight but with explicit bounds for production-like use.
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi

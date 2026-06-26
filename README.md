@@ -270,6 +270,22 @@ Benchmark cold-start model serving on LKE GPU nodes by comparing direct Object S
 </details>
 
 <details>
+<summary><b>🚀 <a href="lke_with_prefetch/">LKE with Dragonfly + kube-fledged Prefetch</a></b> - <code>lke_with_prefetch/</code></summary>
+
+Node-local image prefetch demo for LKE using Dragonfly for P2P layer distribution and kube-fledged for controlled per-node image warming.
+
+**Demonstrates:**
+- Dragonfly registry-mirror mode with dfdaemon proxy on each node
+- `proxyAllRegistries` containerd mirror bootstrap via Dragonfly `dfinit`
+- kube-fledged `ImageCache` prefetch workflow and refresh controls
+- Validation of node-local cache state and Dragonfly metrics/log signals
+- Optional OCI model artifact workflow and Model CSI warmup path for LKE Enterprise
+
+**Additional tools required:** `tofu`, `kubectl`, `helm`, `jq` (`oras` and `hf` optional for OCI model workflow)
+
+</details>
+
+<details>
 <summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.

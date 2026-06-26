@@ -1,0 +1,2 @@
+k8s_version = "v1.33.6+lke7"
+tier        = "enterprise"
