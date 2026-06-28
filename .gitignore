@@ -185,6 +185,9 @@ lke-kserve-kuberay-cache-benchmark/.runtime.env
 lke-kserve-kuberay-cache-benchmark/kubeconfig
 lke-kserve-kuberay-cache-benchmark/benchmark-results/
 
+# lke_with_prefetch
+lke_with_prefetch/.harbor.env
+
 # lke-with-bucket-mount
 lke-with-bucket-mount/.env.local
 lke-with-bucket-mount/kubeconfig

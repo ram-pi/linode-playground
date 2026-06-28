@@ -270,16 +270,22 @@ Benchmark cold-start model serving on LKE GPU nodes by comparing direct Object S
 </details>
 
 <details>
-<summary><b>🚀 <a href="lke_with_prefetch/">LKE with Dragonfly + kube-fledged Prefetch</a></b> - <code>lke_with_prefetch/</code></summary>
+<summary><b>🚀 <a href="lke_with_prefetch/">LKE with Dragonfly + kube-fledged + Harbor Proxy-Cache</a></b> - <code>lke_with_prefetch/</code></summary>
 
-Node-local image prefetch demo for LKE using Dragonfly for P2P layer distribution and kube-fledged for controlled per-node image warming.
+Complete image prefetch and caching architecture for LKE combining Dragonfly P2P distribution, Harbor as a Docker Hub proxy-cache, and kube-fledged for controlled image warming.
 
 **Demonstrates:**
-- Dragonfly registry-mirror mode with dfdaemon proxy on each node
-- `proxyAllRegistries` containerd mirror bootstrap via Dragonfly `dfinit`
+- Dragonfly registry-mirror mode with dfdaemon proxy on each node (`proxyAllRegistries: true`)
+- `proxyAllRegistries` containerd mirror bootstrap via Dragonfly `dfinit` with automatic node-local restarts
+- Harbor as a Docker Hub proxy-cache with imagePullSecret-based authentication
+- Validated Harbor + Dragonfly compatibility for both public and private image pulls
 - kube-fledged `ImageCache` prefetch workflow and refresh controls
-- Validation of node-local cache state and Dragonfly metrics/log signals
+- Validation of node-local cache state via containerd journal, pod events, and Dragonfly metrics
 - Optional OCI model artifact workflow and Model CSI warmup path for LKE Enterprise
+- Deployment examples for Harbor-proxied workloads (nginx, CUDA PyTorch)
+
+**Key Resources:**
+- [MANUAL_DEPLOYMENT_HARBOR.md](lke_with_prefetch/MANUAL_DEPLOYMENT_HARBOR.md) — Step-by-step Harbor + Dragonfly integration runbook
 
 **Additional tools required:** `tofu`, `kubectl`, `helm`, `jq` (`oras` and `hf` optional for OCI model workflow)
 
@@ -569,16 +575,25 @@ Collection of cleanup scripts to remove orphaned or unused Linode resources. Inc
 - Dynamic script discovery and execution
 - Linode CLI automation
 - Resource cleanup best practices
-- Safe deletion workflows with confirmation prompts
+- Safe dry-run mode by default with explicit `--delete` flag for actual removal
 
 **Cleanup scripts:**
+- `cleanup_nodebalancers.sh` — Safe cleanup of unused NodeBalancers with dry-run mode (default) and `--delete` for actual removal
 - Orphaned Cloud Firewalls
 - Unattached Block Storage volumes
-- All NodeBalancers
 - Private/custom images
 
 **Utility scripts:**
 - `list_all_resources.sh` - List all Linode resources in your account
+
+**Usage:**
+```bash
+# Dry-run (safe, default)
+bash utils/cleanup_nodebalancers.sh
+
+# Actual deletion
+bash utils/cleanup_nodebalancers.sh --delete
+```
 
 **Additional tools required:** `linode-cli`, `jq`
 

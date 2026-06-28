@@ -1,0 +1,107 @@
+expose:
+  type: clusterIP
+  tls:
+    enabled: false
+
+# Bootstrap value. The setup script overrides this with:
+# --set externalURL="https://harbor.<GATEWAY_LOAD_BALANCER_IP>.sslip.io"
+externalURL: http://harbor-bootstrap.local
+
+harborAdminPassword: "change-me-before-installing"
+
+secretKey: "change-me-16char"
+
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      size: 100Gi
+    jobservice:
+      jobLog:
+        size: 5Gi
+    database:
+      size: 10Gi
+    redis:
+      size: 5Gi
+    trivy:
+      size: 10Gi
+
+trivy:
+  enabled: true
+
+updateStrategy:
+  # Linode Block Storage is ReadWriteOnce. Recreate prevents multi-attach
+  # conflicts during Harbor upgrades for registry/jobservice PVCs.
+  type: Recreate
+
+core:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+jobservice:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+registry:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+portal:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+nginx:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+database:
+  type: internal
+  internal:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+
+redis:
+  type: internal
+  internal:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
