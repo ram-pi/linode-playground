@@ -35,7 +35,15 @@ kubectl get nodes
 
 Then follow [MANUAL_DEPLOYMENT_DRAGONFLY.md](./MANUAL_DEPLOYMENT_DRAGONFLY.md).
 
-## Optional Extension (WIP)
+## Optional Extension: Harbor Proxy-Cache
+
+For production scenarios where you need a persistent, accessible image registry layer, see [MANUAL_DEPLOYMENT_HARBOR.md](./MANUAL_DEPLOYMENT_HARBOR.md). Harbor acts as a Docker Hub proxy-cache, allowing you to:
+
+- Cache images on-cluster without relying on Docker Hub rate limits
+- Serve images through Harbor's UI for governance and visibility
+- Combine Harbor's authentication with Dragonfly's P2P distribution
+
+## Optional Extension: OCI Model Artifacts (WIP)
 
 If you want to extend the same cache path to OCI-packed model artifacts, image-volume validation, or the LKE Enterprise Model CSI Driver warmup path, use [MANUAL_DEPLOYMENT_OCI_MODEL_VOLUME.md](./MANUAL_DEPLOYMENT_OCI_MODEL_VOLUME.md).
 
