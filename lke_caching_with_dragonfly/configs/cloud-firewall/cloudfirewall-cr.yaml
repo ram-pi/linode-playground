@@ -1,0 +1,27 @@
+apiVersion: networking.linode.com/alpha1v1
+kind: CloudFirewall
+metadata:
+  name: primary
+  namespace: kube-system
+spec:
+  defaultRules: true
+  ruleset:
+    inbound_policy: DROP
+    outbound_policy: ACCEPT
+    inbound:
+      - label: allow-dragonfly-p2p-tcp
+        action: ACCEPT
+        protocol: TCP
+        ports: "4000,4002,4005"
+        addresses:
+          ipv4:
+            - "192.168.128.0/17"
+        description: "Dragonfly P2P dfdaemon upload/download ports (intra-cluster private)"
+      - label: allow-dragonfly-p2p-udp
+        action: ACCEPT
+        protocol: UDP
+        ports: "4006"
+        addresses:
+          ipv4:
+            - "192.168.128.0/17"
+        description: "Dragonfly P2P dfdaemon QUIC port (intra-cluster private)"

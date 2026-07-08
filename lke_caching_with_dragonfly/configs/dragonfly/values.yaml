@@ -1,0 +1,98 @@
+# Dragonfly Helm values — P2P image & model caching with dfinit
+#
+# Install:
+#   export KUBECONFIG="./kubeconfig.yaml"
+#   helm repo add dragonfly https://dragonflyoss.github.io/helm-charts/
+#   helm repo update dragonfly
+#   helm upgrade --install dragonfly dragonfly/dragonfly \
+#     --version 1.7.0 \
+#     --namespace dragonfly-system \
+#     --create-namespace \
+#     -f configs/dragonfly/values.yaml \
+#     --wait --timeout 10m
+#
+# First-install note:
+#   client.dfinit.restartContainerRuntime=true restarts containerd on each node
+#   so the catch-all mirror (proxyAllRegistries) is loaded. After the first
+#   successful install, the install-dragonfly.sh script patches this to false.
+#
+# Replica counts:
+#   Chart defaults are 3 each for manager, scheduler, and seedClient.
+#   Scaled to 1 each for this 3-node demo cluster. For production, use 2-3
+#   schedulers and managers for HA.
+#
+# Redis architecture:
+#   The chart bundles a Bitnami Redis sub-chart with 3 replicas by default.
+#   On a 3-node cluster, the 3 Redis replica PVCs cannot all schedule (each node
+#   already holds other StatefulSet PVCs). Set architecture=standalone to use
+#   only the Redis master (1 pod) — sufficient for Dragonfly's caching metadata.
+#   For production, either use external Redis or ensure enough nodes for replicas.
+
+manager:
+  replicas: 1
+
+scheduler:
+  replicas: 1
+
+seedClient:
+  replicas: 1
+
+redis:
+  # Use standalone architecture (Redis master only, no replicas).
+  # The chart default deploys 3 Redis replicas which cannot schedule on a
+  # 3-node cluster due to PVC anti-affinity constraints.
+  architecture: standalone
+
+client:
+  # Roll nodes more safely than the chart default (20 unavailable).
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+
+  # Enable node-local containerd mirror configuration through Dragonfly's dfinit.
+  # dfinit writes /etc/containerd/certs.d/_default/hosts.toml on every node so
+  # that all registry pulls go through 127.0.0.1:4001 (the dfdaemon proxy).
+  dfinit:
+    enable: true
+    # Set to true on the FIRST install so containerd reloads the mirror config.
+    # The install-dragonfly.sh script patches this to false after the first
+    # successful rollout and re-runs helm upgrade.
+    restartContainerRuntime: false
+    config:
+      containerRuntime:
+        containerd:
+          # Catch-all: proxy ALL registries through Dragonfly.
+          # This writes /etc/containerd/certs.d/_default/hosts.toml pointing
+          # every registry at 127.0.0.1:4001.
+          proxyAllRegistries: true
+          # Explicit registry entries take precedence over the _default catch-all.
+          # serverAddr tells Dragonfly the real registry API endpoint to use.
+          # Without this, Dragonfly infers the upstream from the containerd Host
+          # header (e.g. "docker.io") and proxies to https://docker.io which is
+          # the Docker web frontend (returns 302 → www.docker.com), NOT the
+          # registry API. The registry API lives at index.docker.io /
+          # registry-1.docker.io and requires Bearer token auth that Dragonfly
+          # handles automatically once it connects to the correct endpoint.
+          registries:
+            - hostNamespace: docker.io
+              serverAddr: https://index.docker.io
+              capabilities: ['pull', 'resolve']
+              skipVerify: true
+            - hostNamespace: ghcr.io
+              serverAddr: https://ghcr.io
+              capabilities: ['pull', 'resolve']
+              skipVerify: true
+            - hostNamespace: gcr.io
+              serverAddr: https://gcr.io
+              capabilities: ['pull', 'resolve']
+              skipVerify: true
+            - hostNamespace: registry.k8s.io
+              serverAddr: https://registry.k8s.io
+              capabilities: ['pull', 'resolve']
+              skipVerify: true
+            - hostNamespace: quay.io
+              serverAddr: https://quay.io
+              capabilities: ['pull', 'resolve']
+              skipVerify: true

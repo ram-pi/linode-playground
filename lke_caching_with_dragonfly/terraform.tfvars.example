@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars and edit values as needed.
+# Do NOT commit terraform.tfvars — it may contain secrets.
+
+region              = "us-ord"
+label_prefix        = "dragonfly-cache"
+node_count          = 3
+node_type           = "g7-dedicated-8-4"
+k8s_version         = "1.35"
+tier                = "standard"
+acl_ipv4_whitelist  = ["0.0.0.0/0"]

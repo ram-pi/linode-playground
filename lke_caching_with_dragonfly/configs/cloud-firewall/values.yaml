@@ -1,0 +1,63 @@
+# Cloud Firewall Controller — PoC install with Dragonfly P2P inbound rules.
+#
+# Installs the Cloud Firewall Controller and applies a CloudFirewall CR that
+# allows Dragonfly P2P traffic (dfdaemon ports 4000, 4002, 4005, 4006) from
+# the Linode private network (192.168.128.0/17). Without these rules,
+# inbound_policy: DROP blocks P2P piece transfer between nodes.
+#
+# The 192.168.128.0/17 CIDR covers all current and future nodes — the Cloud
+# Firewall Controller auto-registers new nodes as firewall devices, and new
+# nodes get private IPs in this range automatically. No re-run needed when
+# scaling the cluster (as long as the dfdaemon private IP patch is applied,
+# so P2P traffic uses private IPs).
+#
+# If you skip the private IP patch (dfdaemon advertises public IPs), you must
+# manually add each node's external IP as a /32 rule. See install-cloud-firewall.sh
+# for details.
+#
+# Install:
+#   export KUBECONFIG="./kubeconfig.yaml"
+#   helm repo add linode-cfw https://linode.github.io/cloud-firewall-controller
+#   helm repo update linode-cfw
+#   helm upgrade --install cloud-firewall-crd linode-cfw/cloud-firewall-crd \
+#     --version 0.2.0
+#   kubectl wait --for condition=established --timeout=60s \
+#     crd/cloudfirewalls.networking.linode.com
+#   helm upgrade --install cloud-firewall linode-cfw/cloud-firewall-controller \
+#     --version 0.2.1 \
+#     --namespace kube-system \
+#     --wait --timeout 5m
+#
+# Then apply the CloudFirewall CR from this file:
+#   kubectl apply -f configs/cloud-firewall/values.yaml
+
+# Use chart defaults — no overrides needed for PoC install.
+# This file exists so the install command can always pass -f consistently.
+---
+apiVersion: networking.linode.com/alpha1v1
+kind: CloudFirewall
+metadata:
+  name: primary
+  namespace: kube-system
+spec:
+  defaultRules: true
+  ruleset:
+    inbound_policy: DROP
+    outbound_policy: ACCEPT
+    inbound:
+      - label: allow-dragonfly-p2p-tcp
+        action: ACCEPT
+        protocol: TCP
+        ports: "4000,4002,4005"
+        addresses:
+          ipv4:
+            - "192.168.128.0/17"
+        description: "Dragonfly P2P dfdaemon upload/download ports (intra-cluster private)"
+      - label: allow-dragonfly-p2p-udp
+        action: ACCEPT
+        protocol: UDP
+        ports: "4006"
+        addresses:
+          ipv4:
+            - "192.168.128.0/17"
+        description: "Dragonfly P2P dfdaemon QUIC port (intra-cluster private)"

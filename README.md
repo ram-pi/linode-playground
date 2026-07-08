@@ -292,6 +292,22 @@ Complete image prefetch and caching architecture for LKE combining Dragonfly P2P
 </details>
 
 <details>
+<summary><b>🐉📦 <a href="lke_caching_with_dragonfly/">LKE Caching with Dragonfly P2P</a></b> - <code>lke_caching_with_dragonfly/</code></summary>
+
+Provision an LKE cluster with Dragonfly P2P image caching and validate cold vs hot performance optimizations for Docker image pulls and OCI-packaged ML model artifacts.
+
+**Demonstrates:**
+- Dragonfly P2P image & model caching on LKE Standard
+- Dragonfly `dfinit` for patching containerd mirror settings in place
+- Transparent container runtime optimization via local HTTP proxy (`127.0.0.1:4001`)
+- OCI model artifact serving on LKE using Model CSI Driver
+- Performance benchmarking of containerized model volumes under cold/hot scenarios
+
+**Additional tools required:** `tofu` (OpenTofu), `kubectl`, `helm`, `oras`, `hf`
+
+</details>
+
+<details>
 <summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.
