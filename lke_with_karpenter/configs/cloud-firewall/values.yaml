@@ -1,0 +1,19 @@
+# Cloud Firewall Controller — PoC install with no chart overrides.
+#
+# This file exists so the install command can always pass -f consistently.
+# The controller defaults create a Cloud Firewall named lke-<cluster-id> with
+# the recommended inbound/outbound rules for LKE.
+#
+# Install:
+#   helm repo add linode-cfw https://linode.github.io/cloud-firewall-controller
+#   helm repo update linode-cfw
+#   helm upgrade --install cloud-firewall-crd linode-cfw/cloud-firewall-crd \
+#     --version 0.2.0 --namespace kube-system --wait
+#   kubectl wait --for condition=established --timeout=60s \
+#     crd/cloudfirewalls.networking.linode.com
+#   helm upgrade --install cloud-firewall linode-cfw/cloud-firewall-controller \
+#     --version 0.2.1 --namespace kube-system -f configs/cloud-firewall/values.yaml \
+#     --wait --timeout 5m
+
+# Use chart defaults — no overrides needed for PoC install.
+{}

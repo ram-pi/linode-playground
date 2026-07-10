@@ -1,0 +1,68 @@
+# Default Karpenter NodePool for the Linode provider PoC.
+#
+# Limits:
+#   cpu: 32   — a modest PoC cap to prevent accidental runaway scaling.
+#
+# The LinodeNodeClass is intentionally minimal; in LKE mode the provider
+# provisions nodes by creating count=1 LKE NodePools.
+#
+# IMPORTANT — there is nothing in this file (or in values.yaml) that can
+# prevent the "instance_id: null" stuck-pool issue described in
+# TROUBLESHOOTING_STATUS.md. Source review of pkg/providers/lke/lke.go in
+# linode/karpenter-provider-linode confirms the create path has no
+# concurrency control or pool-level retry beyond polling the same pool for
+# `lkeCreateDeadline`; there is no NodePool/NodeClass field that changes this
+# behavior. Root-caused (2026-07-10) to concurrent LKE pool-create requests
+# against the same cluster — reproduced directly against the Linode API,
+# with no Karpenter involved. If 2+ pods need new capacity at the same
+# instant, Karpenter fires one Create() per NodeClaim concurrently, which
+# reliably reproduces it. Scaling up gradually (one pod's worth of capacity
+# at a time, a few seconds apart) avoids triggering it in practice; jumping
+# straight to a multi-node scale-out does not.
+---
+apiVersion: karpenter.k8s.linode/v1alpha1
+kind: LinodeNodeClass
+metadata:
+  name: default
+spec:
+  # LKE mode ignores image/authorizedKeys/backup fields.
+  # Tags are applied to the provisioned LKE NodePool.
+  tags:
+    - lke-karpenter-demo
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        # Restrict to the same instance type as the baseline Terraform pool.
+        # g6-standard-4 and larger types created by Karpenter in this region
+        # were observed to hang with instance_id: null / status: not_ready.
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["g6-standard-2"]
+      nodeClassRef:
+        group: karpenter.k8s.linode
+        kind: LinodeNodeClass
+        name: default
+      # Nodes are replaced after 30 days. Reduce for testing if desired.
+      expireAfter: 720h
+  disruption:
+    # Valid values in current Karpenter v1 CRDs: WhenEmpty, WhenEmptyOrUnderutilized.
+    # The legacy "WhenUnderutilized" value is no longer accepted.
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    # Wait this long after a pod is added or removed before consolidating.
+    consolidateAfter: 30s
+  # PoC resource cap. Remove or raise only if you intend to scale beyond
+  # ~6-8 g6-standard-2-equivalent nodes.
+  limits:
+    cpu: 32

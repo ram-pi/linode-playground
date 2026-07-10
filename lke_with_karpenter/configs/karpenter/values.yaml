@@ -1,0 +1,53 @@
+# Karpenter provider for Linode — Helm values for LKE mode.
+#
+# The cluster name is injected at install time via --set settings.clusterName=...
+# because it depends on the LKE label created by Terraform.
+#
+# Install:
+#   helm upgrade --install --namespace kube-system --create-namespace karpenter-crd \
+#     charts/karpenter-crd
+#   helm upgrade --install --namespace kube-system --create-namespace karpenter \
+#     charts/karpenter \
+#     --set settings.clusterName="${CLUSTER_NAME}" \
+#     --set apiToken="${LINODE_TOKEN}" \
+#     -f configs/karpenter/values.yaml \
+#     --wait
+
+# Use the stable Linode API for pool creation.
+# The provider chart defaults to apiVersion: v4beta. As of 2026-07-10,
+# /v4beta/lke/clusters/.../pools in this cluster/region creates a pool object
+# but never assigns an instance_id (node stays not_ready with instance_id: null).
+# The stable /v4/ path provisions normally.
+apiVersion: "v4"
+
+# Karpenter global settings.
+settings:
+  # Use LKE NodePool mode (default). Set to "instance" only if testing the
+  # experimental direct-instance mode, which is not yet functional end-to-end.
+  mode: "lke"
+
+  # Longer batch windows are used by default because LKE Standard does not yet
+  # support startup taints. This reduces the chance of duplicate NodeClaims being
+  # provisioned while a node is still registering. Do not reduce without reading
+  # the provider known-issues section.
+  batchMaxDuration: 5m
+  batchIdleDuration: 1m
+
+  # LKE Standard nodes in gb-lon can take 2-3 minutes to be assigned an
+  # instance_id and join the cluster. The provider default is 10s, which is far
+  # too short and causes NodeClaims to time out before the node is ready.
+  # Increase this to at least 5m for a working demo.
+  lkeCreateDeadline: 5m
+
+# Pin controller resources to avoid starving the small g6-standard-2 pool nodes.
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# Default log level. Increase to debug if pods are not scheduling.
+logLevel: info

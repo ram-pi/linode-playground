@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars and edit values as needed.
+# Do NOT commit terraform.tfvars — it may contain secrets.
+
+region              = "gb-lon"
+label_prefix        = "karpenter-demo"
+node_count          = 3
+node_type           = "g6-standard-2"
+k8s_version         = "1.35"
+tier                = "standard"
+acl_ipv4_whitelist  = ["0.0.0.0/0"]

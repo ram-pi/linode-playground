@@ -583,6 +583,25 @@ Multi-region site-to-site VPN setup using WireGuard, connecting two isolated net
 </details>
 
 <details>
+<summary><b>🚀 <a href="lke_with_karpenter/">LKE with Karpenter</a></b> - <code>lke_with_karpenter/</code></summary>
+
+Proof-of-concept showing the **Linode Karpenter provider** running against an LKE Standard cluster in `gb-lon`. Provisions a 3-node cluster, then walks through installing the Cloud Firewall Controller, the Karpenter CRD/controller, a default NodePool, and an `inflate` scale-up/down workload.
+
+> **Alpha software warning** — the Linode Karpenter provider is alpha and not suitable for production.
+
+**Demonstrates:**
+- LKE Standard cluster provisioning in `gb-lon` with OpenTofu
+- Cloud Firewall Controller applying a managed firewall to every node
+- Karpenter on LKE: creates count-1 LKE NodePools to host pending pods and consolidates empty nodes
+- `LinodeNodeClass` + default `NodePool` with a 32-CPU PoC cap
+- `inflate` deployment to trigger scale-up and consolidation
+- Manual runbook in `MANUAL_DEPLOYMENT.md` covering CRD install, controller install, NodePool, and `inflate`
+
+**Additional tools required:** `tofu`, `kubectl`, `helm`
+
+</details>
+
+<details>
 <summary><b>🧹 <a href="utils/">Cleanup Utilities</a></b> - <code>utils/</code></summary>
 
 Collection of cleanup scripts to remove orphaned or unused Linode resources. Includes a master script that automatically discovers and runs all cleanup utilities.
