@@ -602,6 +602,28 @@ Proof-of-concept showing the **Linode Karpenter provider** running against an LK
 </details>
 
 <details>
+<summary><b>🔑 <a href="linode_third_party_auth/">Linode Third-Party OAuth Flow Demo</a></b> - <code>linode_third_party_auth/</code></summary>
+
+Minimal local OAuth Authorization Code demo that signs in through `login.linode.com`, exchanges the authorization code for an OAuth token, and then creates a Personal Access Token (PAT) for the authenticated user.
+
+**Demonstrates:**
+- OAuth Authorization Code flow with Linode login endpoints
+- PAT creation via `POST /v4/profile/tokens` using the OAuth access token
+- User-provided PAT label passed through the flow
+- Scope handling rules (OAuth token scopes bound PAT scopes)
+- Local token persistence for OAuth response and generated PAT response
+- Troubleshooting for invalid client, invalid scope, and permission errors
+
+**Key notes:**
+- OAuth scope must include `account:read_write` to create PATs
+- User role must include `create_profile_pat` permission
+- Redirect URI must match exactly between OAuth app settings and local `.env`
+
+**Additional tools required:** `node`, `curl`, `jq` (recommended for testing)
+
+</details>
+
+<details>
 <summary><b>🧹 <a href="utils/">Cleanup Utilities</a></b> - <code>utils/</code></summary>
 
 Collection of cleanup scripts to remove orphaned or unused Linode resources. Includes a master script that automatically discovers and runs all cleanup utilities.
