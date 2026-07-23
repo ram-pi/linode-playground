@@ -206,3 +206,4 @@ vpc_flow_logs_ktranslate_clickhouse_grafana/terraform.tfvars
 vpc_flow_logs_ktranslate_clickhouse_grafana/kubeconfig
 vpc_flow_logs_ktranslate_clickhouse_grafana/tmp/id_rsa_vpc_flowlogs
 vpc_flow_logs_ktranslate_clickhouse_grafana/tmp/id_rsa_vpc_flowlogs.pub
+linode_third_party_auth/data/*

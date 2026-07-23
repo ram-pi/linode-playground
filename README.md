@@ -61,6 +61,22 @@ Three-host demo connecting two isolated VPCs through a shared VLAN, using one ho
 </details>
 
 <details>
+<summary><b>🧩 <a href="vpc-dual-stack/">VPC Dual Stack (IPv4 + IPv6)</a></b> - <code>vpc-dual-stack/</code></summary>
+
+Two-VM dual-stack VPC demo that validates east-west IPv4 and IPv6 connectivity inside a single subnet, using VPC-only interfaces with 1:1 NAT mapping.
+
+**Demonstrates:**
+- Linode VPC + subnet dual-stack allocation (IPv4 CIDR + IPv6 `auto` range)
+- Two VMs in the same subnet with static VPC IPv4 and SLAAC IPv6
+- Bidirectional IPv4 and IPv6 ping validation via `start.sh`
+- Practical routing caveat: avoiding explicit `public` + `vpc` dual-interface mix for this IPv6 east-west test path
+- Optional `authorized_users` support to SSH with Linode account user keys
+
+**Additional tools required:** `tofu`, SSH client
+
+</details>
+
+<details>
 <summary><b>🔧 <a href="basic/">Basic Multi-Network VM</a></b> - <code>basic/</code></summary>
 
 Basic VM setup demonstrating all three Linode networking types in a single instance. Shows how to configure VPC, VLAN, and Private IP simultaneously for different connectivity patterns.
