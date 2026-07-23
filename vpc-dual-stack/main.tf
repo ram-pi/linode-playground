@@ -14,6 +14,12 @@ locals {
 
   vm1_vpc_ipv4 = "10.30.0.10"
   vm2_vpc_ipv4 = "10.30.0.11"
+  vm3_vpc_ipv4 = "10.30.0.12"
+
+  vlan_label    = "vpc-dual-stack-vlan"
+  vm1_vlan_ipam = "172.16.30.10/24"
+  vm2_vlan_ipam = "172.16.30.11/24"
+  vm3_vlan_ipam = "172.16.30.12/24"
 
   is_windows = length(regexall("^[a-zA-Z]:", abspath(path.root))) > 0
   temp_path  = local.is_windows ? "$env:TEMP" : "/tmp"
