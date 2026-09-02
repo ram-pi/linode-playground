@@ -77,6 +77,27 @@ Two-VM dual-stack VPC demo that validates east-west IPv4 and IPv6 connectivity i
 </details>
 
 <details>
+<summary><b>🧬 <a href="vpc-ipv6-ipv4-dual/">VPC IPv6 + IPv4 Dual Stack with Linode Interfaces</a></b> - <code>vpc-ipv6-ipv4-dual/</code></summary>
+
+Dual-stack VPC demo built on the new `linode_interface` resource (`interface_generation = "linode"`) instead of legacy config interfaces. Two Ubuntu 26.04 VMs share a dual-stack subnet and validate east-west IPv4 and IPv6 connectivity.
+
+**Demonstrates:**
+- `linode_vpc` with a requested IPv6 prefix length (`/52`), Linode allocating the actual GUA range
+- `linode_vpc_subnet` with explicit IPv4 CIDR + `range = "auto"` IPv6 carved from the VPC prefix
+- Standalone `linode_interface` resources with `for_each`, replacing legacy config interfaces
+- Explicit `linode_instance_disk` + `linode_instance_config` boot flow required by Linode interfaces
+- IPv4 `nat_1_1_address = "auto"` for public SSH reachability without a separate public interface
+- SLAAC `/64` IPv6 per VM, read back over SSH since the host-derived suffix is unknown to Terraform
+- `is_public` toggle for publicly routable VPC IPv6
+- Cloud Firewall attached directly to the VPC interface (`firewall_id`), default DROP inbound
+- SSH key-only access (ED25519, no root password) and cloud-init hostname setup
+- Bidirectional IPv4 and IPv6 ping validation via `start.sh`
+
+**Additional tools required:** `tofu`, `jq`, SSH client
+
+</details>
+
+<details>
 <summary><b>🔧 <a href="basic/">Basic Multi-Network VM</a></b> - <code>basic/</code></summary>
 
 Basic VM setup demonstrating all three Linode networking types in a single instance. Shows how to configure VPC, VLAN, and Private IP simultaneously for different connectivity patterns.
