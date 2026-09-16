@@ -345,7 +345,25 @@ Provision an LKE cluster with Dragonfly P2P image caching and validate cold vs h
 </details>
 
 <details>
-<summary><b>🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
+<summary><b>� <a href="lke_cert_manager_csi/">LKE Enterprise + cert-manager CSI Driver</a></b> - <code>lke_cert_manager_csi/</code></summary>
+
+Provision an LKE Enterprise cluster and deploy the cert-manager CSI driver to issue short-lived, per-node client certificates mounted directly into pods. Certificates are requested on-demand when pods mount CSI volumes, with no separate `Certificate` resources or `Secret` objects needed.
+
+**Demonstrates:**
+- LKE Enterprise cluster with high-availability control plane
+- cert-manager installation and CSI driver deployment via Helm
+- Self-signed root CA bootstrap issuer and CA ClusterIssuer
+- Per-node ephemeral certificate generation with private keys never leaving the node
+- DaemonSet-based per-node certificate mounting with automatic renewal
+- Certificate TTL management and mTLS-ready client authentication
+- Control plane ACL configuration for security
+
+**Additional tools required:** `tofu`, `kubectl`, `helm`
+
+</details>
+
+<details>
+<summary><b>�🔒 <a href="secure_lke/">Secure LKE Cluster</a></b> - <code>secure_lke/</code></summary>
 
 Production-ready Linode Kubernetes Engine (LKE) cluster with enhanced security features including VPC support, Cloud Firewall integration, high-availability control plane, and auto-scaling capabilities.
 

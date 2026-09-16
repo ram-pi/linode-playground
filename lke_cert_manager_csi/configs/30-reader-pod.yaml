@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cert-reader-pod
+  namespace: cert-manager-csi-demo
+  labels:
+    app: cert-reader-pod
+spec:
+  nodeSelector:
+    pool: worker
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 2000
+    fsGroup: 2000
+    fsGroupChangePolicy: OnRootMismatch
+  initContainers:
+    - name: install-openssl
+      image: alpine:3.20
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+      command:
+        - /bin/sh
+        - -ec
+        - |
+          apk add --no-cache openssl
+          cp /usr/bin/openssl /tools/openssl
+          chmod 755 /tools/openssl
+      volumeMounts:
+        - name: tools
+          mountPath: /tools
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "250m"
+          memory: "256Mi"
+  containers:
+    - name: cert-reader
+      image: alpine:3.20
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      command:
+        - /bin/sh
+        - -ec
+        - |
+          echo "=== Pod: $POD_NAME ==="
+          echo "--- Certificate ---"
+          /tools/openssl x509 -in /tls/tls.crt -noout -subject -issuer -dates -ext subjectAltName
+          echo "--- Verify against root CA ---"
+          /tools/openssl verify -CAfile /tls/ca.crt /tls/tls.crt
+          echo "--- Key present ---"
+          ls -l /tls/tls.key
+          echo "Certificate mounted and verified. Sleeping to keep pod alive."
+          sleep infinity
+      env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        - name: tools
+          mountPath: /tools
+          readOnly: true
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "250m"
+          memory: "256Mi"
+  volumes:
+    - name: tls
+      csi:
+        driver: csi.cert-manager.io
+        readOnly: true
+        volumeAttributes:
+          csi.cert-manager.io/issuer-name: root-ca-issuer
+          csi.cert-manager.io/issuer-kind: ClusterIssuer
+          csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+          csi.cert-manager.io/common-name: "node.${POD_NAMESPACE}.svc.cluster.local"
+          csi.cert-manager.io/duration: "30m"
+          csi.cert-manager.io/key-usages: "client auth"
+          csi.cert-manager.io/key-algorithm: ECDSA
+          csi.cert-manager.io/key-size: "256"
+          csi.cert-manager.io/certificate-file: tls.crt
+          csi.cert-manager.io/privatekey-file: tls.key
+          csi.cert-manager.io/ca-file: ca.crt
+          csi.cert-manager.io/fs-group: "2000"
+    - name: tools
+      emptyDir: {}
