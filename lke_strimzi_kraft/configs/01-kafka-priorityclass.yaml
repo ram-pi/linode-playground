@@ -1,0 +1,15 @@
+# PriorityClass for Kafka brokers and controllers.
+#
+# The Kafka pools are tainted so only Kafka can land on them, but taints do not
+# help when the node itself is full: without a priority, a lower-value pod on the
+# node could cause Kafka to be preempted or delayed during scheduling. This class
+# puts Kafka above normal workloads (value 0) but deliberately below the
+# system-critical range (2000000000) so Kafka can never preempt cluster add-ons
+# or Strimzi's own control plane.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: kafka-critical
+value: 1000000
+globalDefault: false
+description: "High priority for Kafka brokers and KRaft controllers. Preempts normal workloads but never system-critical add-ons."

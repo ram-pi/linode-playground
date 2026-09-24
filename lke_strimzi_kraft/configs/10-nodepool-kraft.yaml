@@ -1,0 +1,57 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: kraft
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka
+  annotations:
+    # Pin controller node IDs to the range reserved for the controller pool.
+    strimzi.io/next-node-ids: "[100-102]"
+spec:
+  replicas: 3
+  roles:
+    - controller
+  storage:
+    type: persistent-claim
+    size: 20Gi
+    class: linode-block-storage-retain
+    deleteClaim: false
+  resources:
+    # Sized to fit the g6-standard-4 node's *allocatable* capacity, not its raw
+    # size: kubelet reserves ~90m CPU and ~2 GiB RAM, leaving ~3920m / 5.86Gi.
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "2"
+      memory: 3Gi
+  template:
+    pod:
+      # The kraft pool is tainted dedicated=kafka-kraft:NoSchedule, so the pod
+      # must tolerate it to be schedulable there.
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: kafka-kraft
+          effect: NoSchedule
+      # Above normal workloads, below system-critical add-ons; see 01-kafka-priorityclass.yaml.
+      priorityClassName: kafka-critical
+      # LKE turns pool labels into node labels, so role=kafka-kraft selects the
+      # dedicated controller pool. KafkaNodePool has no nodeSelector field.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - kafka-kraft
+        podAntiAffinity:
+          # Exactly one controller per node.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  strimzi.io/pool-name: kraft

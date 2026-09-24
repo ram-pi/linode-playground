@@ -273,6 +273,43 @@ Usage and runbook live in the project folder; see `lke_nodeport_haproxy/MANUAL_D
 </details>
 
 <details>
+<summary><b>🐘 <a href="lke_strimzi_kraft/">LKE Enterprise with Strimzi Kafka (KRaft)</a></b> - <code>lke_strimzi_kraft/</code></summary>
+
+Apache Kafka 4.3.1 in KRaft mode on LKE Enterprise, managed by the Strimzi Kafka Operator 1.2.0. Controllers and brokers run in separate, dedicated node pools so quorum traffic and broker I/O never compete, with metrics isolated on their own pool.
+
+**Demonstrates:**
+- Four-pool LKE Enterprise cluster on a dedicated dual-stack VPC subnet with a shared Cloud Firewall
+- Separate KRaft controller and broker pools, one Kafka pod per node via required anti-affinity
+- Taints/tolerations plus `priorityClassName: kafka-critical` to reserve nodes and prevent noisy neighbours
+- SSD-backed Linode Block Storage for broker/controller volumes (`linode-block-storage-retain`)
+- Two listeners: in-cluster `internal` (9092) and VPC-reachable `nodeport` (9094, SCRAM-SHA-512)
+- Pinned broker node IDs and NodePorts for deterministic clients and firewall rules
+- Strimzi Metrics Reporter, Kafka Exporter, and Cruise Control wired into Prometheus/Grafana dashboards
+- Phased stress test covering throughput, CFS quota, page cache, `O_DIRECT` disk, and broker failure recovery
+
+**Additional tools required:** `tofu`, `linode-cli`, `kubectl`, `helm`, `jq`, `envsubst`
+
+Usage and runbook live in the project folder; see `lke_strimzi_kraft/README.md` for deployment and stress testing details.
+
+</details>
+
+<details>
+<summary><b>🌐 <a href="lke_enterprise_nodeport_external_dns/">LKE Enterprise NodePort + ExternalDNS</a></b> - <code>lke_enterprise_nodeport_external_dns/</code></summary>
+
+Private-service discovery demo that places an LKE Enterprise cluster and a 1:1 NAT client VM in one dual-stack VPC. ExternalDNS publishes a host-networked NodePort service to Linode DNS using worker-node VPC addresses.
+
+**Demonstrates:**
+- Latest available LKE Enterprise version selection
+- User-supplied VPC networking shared by LKE and a client Linode
+- Host-networked DaemonSet exposed with a private NodePort
+- ExternalDNS with the Linode provider and private node targets
+- End-to-end FQDN resolution and HTTP verification from the VPC client
+
+**Additional tools required:** `tofu`, `linode-cli`, `kubectl`, `helm`, `jq`, `envsubst`, `ssh`
+
+</details>
+
+<details>
 <summary><b>🤖🔗 <a href="lke_distributed_inference/">LKE Distributed Inference with Karmada + KubeRay</a></b> - <code>lke_distributed_inference/</code></summary>
 
 Multi-cluster inference architecture for **Mistral-7B-v0.3** using Karmada for orchestration across three LKE clusters. Features a centralized control plane in London and two high-availability GPU-enabled worker clusters in Frankfurt.

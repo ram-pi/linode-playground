@@ -1,0 +1,21 @@
+# Metrics config for Cruise Control, referenced by
+# Kafka.spec.cruiseControl.metricsConfig (type: jmxPrometheusExporter).
+# Cruise Control does not support the Strimzi Metrics Reporter, so the JMX
+# Prometheus Exporter is required for this component.
+# From Strimzi 1.2.0 examples/metrics/kafka-cruise-control-metrics.yaml.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cruise-control-metrics
+  namespace: kafka
+  labels:
+    app: strimzi
+data:
+  metrics-config.yml: |
+    # See https://github.com/prometheus/jmx_exporter for more info about JMX Prometheus Exporter metrics
+    lowercaseOutputName: true
+    rules:
+    - pattern: kafka.cruisecontrol<name=(.+)><>(\w+)
+      name: kafka_cruisecontrol_$1_$2
+      type: GAUGE

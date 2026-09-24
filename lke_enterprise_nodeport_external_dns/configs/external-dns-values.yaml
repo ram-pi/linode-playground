@@ -1,0 +1,37 @@
+provider:
+  name: linode
+
+sources:
+  - service
+
+policy: upsert-only
+registry: txt
+txtOwnerId: lke-enterprise-nodeport
+labelFilter: external-dns=enabled
+
+env:
+  - name: LINODE_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: linode-api-token
+        key: token
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+securityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true

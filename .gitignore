@@ -5,6 +5,8 @@
 *.tfvars.json
 .terraform/
 .terraform.lock.hcl
+client_key
+kubeconfig
 crash.log
 crash.*.log
 override.tf
@@ -178,6 +180,11 @@ lke-model-cache-benchmark/.model-cache/
 lke-model-cache-benchmark/.runtime.env
 lke-model-cache-benchmark/benchmark-results/
 lke-model-cache-benchmark/kubeconfig
+
+# lke_strimzi_kraft
+lke_strimzi_kraft/.runtime.env
+lke_strimzi_kraft/kubeconfig
+lke_strimzi_kraft/stress-results/
 
 # lke-kserve-kuberay-cache-benchmark
 lke-kserve-kuberay-cache-benchmark/.env.local

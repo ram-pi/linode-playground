@@ -1,0 +1,23 @@
+# Dedicated topic for stress testing, kept separate from the demo topic so that
+# test load and retention never touch demo-orders data.
+#
+# 24 partitions spread evenly across the 4 brokers (6 leaders each) so a single
+# producer can saturate all brokers in parallel.
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: stress-test
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  partitions: 24
+  replicas: 3
+  config:
+    min.insync.replicas: 2
+    # Short retention: the stress test can write a lot of data quickly. Deletion
+    # plus the cleanup in scripts/stress-test.sh bounds disk growth.
+    retention.ms: 3600000
+    cleanup.policy: delete
+    # Larger segments reduce the number of open files during high throughput.
+    segment.bytes: 1073741824

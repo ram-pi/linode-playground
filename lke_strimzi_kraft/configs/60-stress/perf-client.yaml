@@ -1,0 +1,54 @@
+# Long-running load generator for the stress tests. The stress-test script execs
+# kafka-producer-perf-test.sh / kafka-consumer-perf-test.sh inside this pod.
+#
+# Pinned to the KRaft controller pool: that pool has the most spare capacity, and
+# keeping the generator off the broker nodes means the broker CPU/memory measured
+# during the test is Kafka's own, not the client's.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kafka-perf-client
+  namespace: kafka
+  labels:
+    app: kafka-perf-client
+spec:
+  restartPolicy: Never
+  # The test client holds no state and runs `sleep infinity`; delete it instantly
+  # so a follow-up stress run is not blocked by a terminating pod.
+  terminationGracePeriodSeconds: 0
+  # The kraft pool is tainted; the generator runs there and must tolerate it.
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: kafka-kraft
+      effect: NoSchedule
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                  - kafka-kraft
+  containers:
+    - name: perf-client
+      image: quay.io/strimzi/kafka:1.2.0-kafka-4.3.1
+      command:
+        - /bin/bash
+        - -c
+        - "sleep infinity"
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1Gi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        runAsUser: 1000

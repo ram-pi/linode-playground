@@ -1,0 +1,110 @@
+# kube-prometheus-stack values for the Kafka demo.
+#
+# Chart: prometheus-community/kube-prometheus-stack 91.5.0 (app v0.94.0)
+#
+# The stack is pinned to the dedicated monitoring node pool so scrape and TSDB
+# activity never competes with, or distorts measurements of, the Kafka nodes.
+
+# --- Prometheus ---
+prometheus:
+  prometheusSpec:
+    # CRITICAL: the chart defaults *_SelectorNilUsesHelmValues to true, which
+    # rewrites an empty podMonitorSelector to "release: kube-prometheus-stack".
+    # The Strimzi PodMonitors are labeled "app: strimzi" and would then be
+    # silently ignored. Setting this to false leaves the selector empty, which
+    # matches every PodMonitor in every namespace the Prometheus instance can see.
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+
+    # Discover monitors, rules, and ServiceMonitors in all namespaces.
+    podMonitorNamespaceSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    ruleNamespaceSelector: {}
+
+    retention: 10d
+    # Ephemeral storage by design: metrics are only needed for the duration of a
+    # stress test. See storageSpec in the README for the persistent option.
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+
+    # Pin Prometheus to the monitoring pool.
+    nodeSelector:
+      role: monitoring
+
+# --- Alertmanager ---
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    # Pin Alertmanager to the monitoring pool as well; without this it is
+    # scheduled anywhere, including the Kafka nodes.
+    nodeSelector:
+      role: monitoring
+
+# --- Grafana ---
+grafana:
+  # Dashboard sidecar is enabled by default and discovers ConfigMaps labeled
+  # grafana_dashboard=1 in all namespaces.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  nodeSelector:
+    role: monitoring
+  # Exposed via the NodePort of the LKE cluster; see scripts/install-monitoring.sh
+  # for the access command. Change the admin password before exposing this.
+  adminPassword: prom-operator
+
+# --- Prometheus Operator ---
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  # The operator is a control-plane component and belongs with the system
+  # add-ons, not on the monitoring node or the tainted Kafka pools.
+  nodeSelector:
+    role: system
+
+# --- kube-state-metrics ---
+kubeStateMetrics:
+  enabled: true
+
+# The kube-state-metrics subchart has its own values section. Without a
+# nodeSelector it can land on (or be repelled from) the tainted Kafka pools.
+kube-state-metrics:
+  nodeSelector:
+    role: monitoring
+
+# --- node-exporter ---
+# Runs as a DaemonSet on every node (including Kafka nodes) with hostNetwork, so
+# its own footprint is minimal. Keep it: container_cpu_cfs_throttled and
+# container_memory_working_set metrics for the Kafka pods come from cAdvisor,
+# while node-level CPU/memory pressure comes from node-exporter.
+nodeExporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi

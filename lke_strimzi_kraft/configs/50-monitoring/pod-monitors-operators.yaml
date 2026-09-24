@@ -1,0 +1,40 @@
+# PodMonitors for the Strimzi Entity Operator and Cluster Operator.
+# Adapted from Strimzi 1.2.0 examples/metrics/prometheus-install/pod-monitors/.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: entity-operator-metrics
+  namespace: kafka
+  labels:
+    app: strimzi
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: entity-operator
+  namespaceSelector:
+    matchNames:
+      - kafka
+  podMetricsEndpoints:
+    - path: /metrics
+      port: healthcheck-to
+    - path: /metrics
+      port: healthcheck-uo
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cluster-operator-metrics
+  namespace: kafka
+  labels:
+    app: strimzi
+spec:
+  selector:
+    matchLabels:
+      strimzi.io/kind: cluster-operator
+  namespaceSelector:
+    matchNames:
+      - kafka
+  podMetricsEndpoints:
+    - path: /metrics
+      port: http

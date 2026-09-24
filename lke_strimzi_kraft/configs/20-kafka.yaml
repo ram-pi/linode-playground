@@ -1,0 +1,119 @@
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: kafka
+  namespace: kafka
+spec:
+  kafka:
+    version: "4.3.1"
+    metadataVersion: "4.3"
+    config:
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+    listeners:
+      # In-cluster clients. Plaintext on the pod network.
+      - name: internal
+        port: 9092
+        type: internal
+        tls: false
+      # External clients on the VPC. tls: false means SCRAM credentials are not
+      # encrypted, so the advertised address is the node InternalIP and the Cloud
+      # Firewall restricts these ports to the VPC CIDR.
+      - name: external
+        port: 9094
+        type: nodeport
+        tls: false
+        authentication:
+          type: scram-sha-512
+        configuration:
+          preferredNodePortAddressType: InternalIP
+          bootstrap:
+            nodePort: 32100
+          brokers:
+            - broker: 0
+              nodePort: 32101
+            - broker: 1
+              nodePort: 32102
+            - broker: 2
+              nodePort: 32103
+            - broker: 3
+              nodePort: 32104
+    # Strimzi Metrics Reporter (GA, no feature gate). Exposes Kafka metrics in
+    # Prometheus format on port 9404 (name tcp-prometheus), avoiding the JMX
+    # exporter's relabeling rules. Enabling this on an existing cluster triggers
+    # a rolling restart of all brokers and controllers.
+    metricsConfig:
+      type: strimziMetricsReporter
+      values:
+        allowList:
+          - ".*"
+  # Consumer-group lag metrics for Grafana's Kafka Exporter dashboard.
+  # Support components are pinned to the untainted system pool so they never
+  # contend with brokers/controllers on the tainted Kafka nodes.
+  kafkaExporter:
+    topicRegex: ".*"
+    groupRegex: ".*"
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: role
+                      operator: In
+                      values:
+                        - system
+  # No spec.kafka.authorization: no authorizer is configured, so every
+  # authenticated user has full access (authentication only, not authorization).
+  cruiseControl:
+    brokerCapacity:
+      # Matches the broker pool's cpu requests (== limits), which Strimzi would
+      # otherwise auto-derive. Set explicitly because the value (7) is bounded by
+      # the node's allocatable CPU, not its raw 8 vCPU.
+      cpu: "7"
+      inboundNetwork: 10000KiB/s
+      outboundNetwork: 10000KiB/s
+    # Cruise Control does not support the Strimzi Metrics Reporter; only the JMX
+    # Prometheus Exporter is available for this component.
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: cruise-control-metrics
+          key: metrics-config.yml
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: role
+                      operator: In
+                      values:
+                        - system
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: role
+                      operator: In
+                      values:
+                        - system

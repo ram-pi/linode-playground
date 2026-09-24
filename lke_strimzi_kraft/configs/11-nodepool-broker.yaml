@@ -1,0 +1,57 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: broker
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: kafka
+  annotations:
+    # Pin broker node IDs to 0-3 so NodePort assignments and firewall rules stay stable.
+    strimzi.io/next-node-ids: "[0-3]"
+spec:
+  replicas: 4
+  roles:
+    - broker
+  storage:
+    type: persistent-claim
+    size: 100Gi
+    class: linode-block-storage-retain
+    deleteClaim: false
+  resources:
+    # Sized to fit the g6-dedicated-8 node's *allocatable* capacity, not its raw
+    # size: kubelet reserves ~90m CPU and ~3 GiB RAM, leaving ~7910m / 12.9Gi.
+    # requests.cpu == limits.cpu so Cruise Control's auto-derived CPU capacity is
+    # accurate (Strimzi derives capacity from node pool requests, then limits).
+    requests:
+      cpu: "7"
+      memory: 12Gi
+    limits:
+      cpu: "7"
+      memory: 12Gi
+  template:
+    pod:
+      # The broker pool is tainted dedicated=kafka-broker:NoSchedule, so the pod
+      # must tolerate it to be schedulable there.
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: kafka-broker
+          effect: NoSchedule
+      # Above normal workloads, below system-critical add-ons; see 01-kafka-priorityclass.yaml.
+      priorityClassName: kafka-critical
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - kafka-broker
+        podAntiAffinity:
+          # Exactly one broker per node.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  strimzi.io/pool-name: broker
