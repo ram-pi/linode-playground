@@ -8,11 +8,14 @@
 #   ./cleanup-unattached-pvcs.sh              # dry-run
 #   ./cleanup-unattached-pvcs.sh --delete     # actually delete
 #   ./cleanup-unattached-pvcs.sh --region us-east --delete
+#   ./cleanup-unattached-pvcs.sh --as-user my-child-account --delete
 
 set -euo pipefail
 
 DRY_RUN=true
 REGION_FILTER=""
+AS_USER=""
+AS_USER_OPTION=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -24,8 +27,13 @@ while [[ $# -gt 0 ]]; do
       REGION_FILTER="$2"
       shift 2
       ;;
+    --as-user)
+      AS_USER="$2"
+      AS_USER_OPTION="--as-user $AS_USER"
+      shift 2
+      ;;
     --help|-h)
-      echo "Usage: $0 [--delete] [--region <region>]"
+      echo "Usage: $0 [--delete] [--region <region>] [--as-user <username>]"
       echo "  Default: dry-run across all regions"
       exit 0
       ;;
@@ -52,11 +60,12 @@ else
   echo "⚠️  DELETE mode enabled"
 fi
 [[ -n "$REGION_FILTER" ]] && echo "   Region filter: $REGION_FILTER"
+[[ -n "$AS_USER" ]] && echo "   Acting as user: $AS_USER"
 echo ""
 
 echo "📋 Fetching Linode volumes..."
 
-VOLUMES_JSON=$(linode-cli volumes list --json 2>/dev/null)
+VOLUMES_JSON=$(linode-cli volumes list ${AS_USER_OPTION} --json 2>/dev/null)
 
 # Filter unattached: linode_id is null or 0
 UNATTACHED=$(echo "$VOLUMES_JSON" | jq '[.[] | select(.linode_id == null or .linode_id == 0)]')
@@ -82,7 +91,7 @@ while IFS=$'\t' read -r id label region size status; do
     echo "   🗑️  WOULD DELETE  id=$id  label=$label  region=$region  size=${size}GB  status=$status"
   else
     echo "   🗑️  Deleting  id=$id  label=$label  region=$region  size=${size}GB..."
-    linode-cli volumes delete "$id"
+    linode-cli volumes delete "$id" ${AS_USER_OPTION}
     echo "      ✅ Deleted."
     (( DELETED++ )) || true
   fi
