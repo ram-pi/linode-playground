@@ -186,6 +186,15 @@ lke_strimzi_kraft/.runtime.env
 lke_strimzi_kraft/kubeconfig
 lke_strimzi_kraft/stress-results/
 
+# lke_nats_jetstream
+lke_nats_jetstream/.runtime.env
+lke_nats_jetstream/kubeconfig
+lke_nats_jetstream/configs/30-nats-values.rendered.yaml
+lke_nats_jetstream/client_key
+lke_nats_jetstream/.client_known_hosts
+lke_nats_jetstream/stress-results/
+lke_nats_jetstream/.nats-ca.crt
+
 # lke-kserve-kuberay-cache-benchmark
 lke-kserve-kuberay-cache-benchmark/.env.local
 lke-kserve-kuberay-cache-benchmark/.runtime.env
